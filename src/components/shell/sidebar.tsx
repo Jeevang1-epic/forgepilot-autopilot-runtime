@@ -9,17 +9,17 @@ export const navigationItems = [
   {
     href: "/",
     label: "Command Center",
-    description: "Launch and monitor local runs",
+    description: "Launch and monitor local autopilot runs",
   },
   {
     href: "/run/demo",
     label: "Flight Recorder",
-    description: "Proof timeline and artifacts",
+    description: "Replay execution proof and artifacts",
   },
   {
     href: "/architecture",
     label: "Architecture Proof",
-    description: "Runtime plan for judges",
+    description: "Trace the runtime plan for judges",
   },
 ];
 
@@ -27,15 +27,15 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-20 hidden w-72 border-r border-white/10 bg-black/30 px-5 py-6 backdrop-blur-xl lg:flex lg:flex-col">
-      <Link href="/" className="group block rounded-lg border border-white/10 bg-white/[0.04] p-4 shadow-2xl shadow-black/30">
+    <aside className="fixed inset-y-0 left-0 z-20 hidden w-72 border-r border-white/10 bg-black/35 px-5 py-6 backdrop-blur-xl lg:flex lg:flex-col">
+      <Link href="/" className="group block rounded-lg border border-white/10 bg-white/[0.055] p-4 shadow-2xl shadow-black/30">
         <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-lg border border-teal-300/30 bg-teal-300/10 text-sm font-semibold text-teal-100">
+          <div className="flex h-11 w-11 items-center justify-center rounded-lg border border-teal-300/35 bg-teal-300/12 text-sm font-semibold text-teal-100 shadow-lg shadow-teal-950/30">
             FP
           </div>
           <div>
             <p className="text-sm font-semibold text-white">ForgePilot</p>
-            <p className="text-xs text-white/52">Autopilot Runtime</p>
+            <p className="text-xs text-white/60">Autopilot Runtime</p>
           </div>
         </div>
       </Link>
@@ -52,8 +52,8 @@ export function Sidebar() {
               className={cn(
                 "group block rounded-lg border px-4 py-3 transition",
                 isActive
-                  ? "border-teal-300/30 bg-teal-300/10 text-white shadow-lg shadow-teal-950/30"
-                  : "border-transparent text-white/64 hover:border-white/10 hover:bg-white/[0.04] hover:text-white",
+                  ? "border-teal-300/35 bg-teal-300/12 text-white shadow-lg shadow-teal-950/30"
+                  : "border-transparent text-white/70 hover:border-white/12 hover:bg-white/[0.055] hover:text-white",
               )}
             >
               <div className="flex items-center justify-between gap-3">
@@ -65,24 +65,30 @@ export function Sidebar() {
                   )}
                 />
               </div>
-              <p className="mt-1 text-xs leading-5 text-white/44">{item.description}</p>
+              <p className="mt-1 text-xs leading-5 text-white/52">{item.description}</p>
             </Link>
           );
         })}
       </nav>
 
-      <div className="mt-auto rounded-lg border border-white/10 bg-white/[0.035] p-4">
+      <div className="mt-auto rounded-lg border border-white/10 bg-white/[0.045] p-4">
         <div className="flex items-center justify-between">
-          <p className="text-xs font-medium uppercase tracking-[0.22em] text-white/38">
+          <p className="text-xs font-medium uppercase tracking-[0.22em] text-white/46">
             Runtime Mode
           </p>
           <span className="rounded-full border border-emerald-300/30 bg-emerald-300/10 px-2 py-1 text-[10px] font-semibold text-emerald-200">
             LOCAL
           </span>
         </div>
-        <p className="mt-3 text-sm leading-6 text-white/58">
+        <p className="mt-3 text-sm leading-6 text-white/64">
           Designed for Qwen-powered plans, human approval gates, and artifact-first output.
         </p>
+        <Link
+          href="/run/demo"
+          className="mt-4 inline-flex h-10 w-full items-center justify-center rounded-lg border border-teal-300/25 bg-teal-300/10 text-sm font-semibold text-teal-100 transition hover:bg-teal-300/15"
+        >
+          View flight recorder
+        </Link>
       </div>
     </aside>
   );

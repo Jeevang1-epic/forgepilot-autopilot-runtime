@@ -37,6 +37,36 @@ export function Topbar() {
           </div>
         </div>
 
+        <div className="hidden items-center justify-between gap-3 lg:flex">
+          <div className="flex gap-2">
+            {navigationItems.map((item) => {
+              const isActive =
+                item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
+
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    "rounded-full border px-3 py-1.5 text-xs font-medium transition",
+                    isActive
+                      ? "border-teal-300/35 bg-teal-300/12 text-teal-100"
+                      : "border-white/10 bg-white/[0.035] text-white/62 hover:border-white/20 hover:text-white",
+                  )}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
+          </div>
+          <Link
+            href="/run/demo"
+            className="rounded-full bg-teal-200 px-4 py-1.5 text-xs font-semibold text-slate-950 shadow-lg shadow-teal-950/20 transition hover:bg-teal-100"
+          >
+            Run Replay
+          </Link>
+        </div>
+
         <nav className="flex gap-2 overflow-x-auto pb-1 lg:hidden">
           {navigationItems.map((item) => {
             const isActive =

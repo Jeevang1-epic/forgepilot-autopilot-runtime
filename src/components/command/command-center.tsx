@@ -22,7 +22,7 @@ export function CommandCenter() {
   const [triggerType, setTriggerType] = useState<TriggerType>("manual");
 
   return (
-    <section className="rounded-lg border border-white/10 bg-white/[0.045] p-5 shadow-2xl shadow-black/30 backdrop-blur-xl sm:p-6">
+    <section className="rounded-lg border border-white/10 bg-white/[0.055] p-5 shadow-2xl shadow-black/30 backdrop-blur-xl sm:p-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-teal-200/70">
@@ -30,7 +30,7 @@ export function CommandCenter() {
           </p>
           <h2 className="mt-2 text-2xl font-semibold text-white">Start an autopilot run</h2>
         </div>
-        <span className="w-fit rounded-full border border-white/10 bg-black/30 px-3 py-1.5 text-xs text-white/58">
+        <span className="w-fit rounded-full border border-white/10 bg-black/30 px-3 py-1.5 text-xs text-white/66">
           local-first demo mode
         </span>
       </div>
@@ -40,7 +40,7 @@ export function CommandCenter() {
         <textarea
           value={command}
           onChange={(event) => setCommand(event.target.value)}
-          className="mt-3 min-h-32 w-full resize-none rounded-lg border border-white/10 bg-black/30 p-4 font-mono text-sm leading-6 text-white outline-none ring-0 transition placeholder:text-white/28 focus:border-teal-300/50 focus:bg-black/40"
+          className="mt-3 min-h-32 w-full resize-none rounded-lg border border-white/12 bg-black/35 p-4 font-mono text-sm leading-6 text-white outline-none ring-0 transition placeholder:text-white/35 focus:border-teal-300/50 focus:bg-black/45"
           spellCheck={false}
         />
       </label>
@@ -48,7 +48,7 @@ export function CommandCenter() {
       <div className="mt-5">
         <div className="mb-3 flex items-center justify-between gap-3">
           <span className="text-sm font-medium text-white/72">Trigger selector</span>
-          <span className="text-xs text-white/38">{triggerType.replace("_", " ")}</span>
+          <span className="text-xs font-medium text-white/50">{triggerType.replace("_", " ")}</span>
         </div>
         <TriggerSelector value={triggerType} onChange={setTriggerType} />
       </div>
@@ -58,18 +58,18 @@ export function CommandCenter() {
           <div
             key={item}
             className={cn(
-              "rounded-lg border border-white/10 bg-black/20 p-3",
-              index === 1 && "border-cyan-200/20 bg-cyan-200/[0.055]",
+              "rounded-lg border border-white/10 bg-black/25 p-3",
+              index === 1 && "border-cyan-200/25 bg-cyan-200/[0.075]",
             )}
           >
-            <p className="font-mono text-xs text-white/34">0{index + 1}</p>
-            <p className="mt-2 text-sm font-medium leading-5 text-white/72">{item}</p>
+            <p className="font-mono text-xs text-white/44">0{index + 1}</p>
+            <p className="mt-2 text-sm font-medium leading-5 text-white/78">{item}</p>
           </div>
         ))}
       </div>
 
       <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm leading-6 text-white/50">
+        <p className="text-sm leading-6 text-white/62">
           The run will pause before writing artifacts that include public-facing claims.
         </p>
         <Link
