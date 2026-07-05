@@ -1,36 +1,73 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ForgePilot - Jeevan Autopilot Runtime
 
-## Getting Started
+ForgePilot is a local-first autopilot runtime foundation that turns one messy command into a planned workflow, human approval checkpoint, generated artifacts, and a Flight Recorder timeline.
 
-First, run the development server:
+## Hackathon Track
+
+Qwen Cloud Global AI Hackathon, Track 4: Autopilot Agent.
+
+## Core Runtime Flow
+
+Trigger Engine -> Qwen Planner -> Runtime Executor -> Tool Registry -> Approval Gate -> Artifact Writer -> Flight Recorder
+
+ForgePilot is not a generic chatbot. The command input is only the trigger surface. The product foundation is organized around typed runs, tool calls, approvals, local artifacts, and auditable timeline events.
+
+## MVP Scope
+
+- Premium Next.js App Router interface with a dark mission-control shell.
+- Home Command Center with command intake, trigger selector, seeded recent runs, and runtime stats.
+- Live Flight Recorder demo page with timeline events, risk labels, tool names, approval preview, and artifact panel.
+- Architecture proof page explaining the runtime flow and judge-facing differentiators.
+- Strong TypeScript runtime types for runs, timeline steps, tool calls, approvals, and artifacts.
+- Seeded mock data for a hackathon submission-pack workflow.
+
+## Planned Qwen Cloud Integration
+
+Qwen Cloud is not wired to live API calls yet. The planned integration is:
+
+- Send the normalized run objective to Qwen Cloud.
+- Request a structured JSON plan with ordered steps, tool intents, risk levels, and approval requirements.
+- Validate the returned plan against ForgePilot runtime types before execution.
+- Store planner output in the Flight Recorder so judges can inspect how the plan became a workflow.
+
+## Planned Human Approval Gate
+
+The approval gate will pause high-impact actions before they run, including public-facing claims, file writes, deployments, outbound webhooks, and other actions that need explicit human control.
+
+## Planned Artifact Generation
+
+ForgePilot will write reviewed outputs to local artifact paths, such as:
+
+- `submission-pack.md`
+- `demo-script.md`
+- `linkedin-post.md`
+- `architecture-summary.md`
+- `run-report.json`
+
+The goal is to leave builders with useful files they can inspect, edit, commit, or submit.
+
+## Local Setup
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open `http://localhost:3000` to view the Command Center.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Useful checks:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run lint
+npm run build
+```
 
-## Learn More
+## Environment Variables
 
-To learn more about Next.js, take a look at the following resources:
+Copy `.env.example` when wiring live Qwen Cloud credentials later:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+QWEN_API_KEY=
+QWEN_BASE_URL=
+QWEN_MODEL=
+```
