@@ -12,17 +12,17 @@ export function FlightTimeline({ steps }: FlightTimelineProps) {
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-teal-200/70">
-            Flight Recorder
+            Execution Timeline
           </p>
-          <h2 className="mt-2 text-3xl font-semibold text-white">Live run timeline</h2>
+          <h2 className="mt-2 text-3xl font-semibold text-white">Tool execution as recorded</h2>
         </div>
-        <span className="w-fit rounded-full border border-emerald-200/30 bg-emerald-200/10 px-3 py-1.5 text-xs font-medium text-emerald-100">
-          sealed demo run
+        <span className="w-fit rounded-full border border-cyan-200/30 bg-cyan-200/10 px-3 py-1.5 text-xs font-medium text-cyan-100">
+          replayable event stream
         </span>
       </div>
 
       <div className="relative space-y-4 lg:ml-8">
-        <div className="absolute bottom-6 left-[-1.65rem] top-6 hidden w-px bg-gradient-to-b from-teal-200/50 via-white/12 to-transparent lg:block" />
+        <div className="absolute bottom-6 left-[-1.65rem] top-6 hidden w-px bg-gradient-to-b from-teal-200/60 via-amber-200/30 to-transparent lg:block" />
         {steps.map((step, index) => (
           <TimelineStepCard key={step.id} step={step} index={index} />
         ))}

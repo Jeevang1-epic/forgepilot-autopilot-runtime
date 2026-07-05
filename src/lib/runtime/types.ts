@@ -30,6 +30,7 @@ export type ToolCall = {
   name: string;
   provider: "local" | "qwen-cloud" | "runtime";
   status: ToolCallStatus;
+  riskLevel: RiskLevel;
   inputSummary: string;
   outputSummary?: string;
   startedAt: string;
