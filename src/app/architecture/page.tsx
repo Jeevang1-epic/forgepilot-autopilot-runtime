@@ -19,7 +19,7 @@ const proofSections = [
     points: [
       "Use Qwen for plan generation from messy solo-builder commands.",
       "Return JSON plan steps that match ForgePilot timeline and tool-call types.",
-      "Keep prompts and planner configuration explicit so the behavior can be reviewed.",
+      "Keep planner configuration explicit so the behavior can be reviewed.",
     ],
   },
   {
@@ -64,6 +64,36 @@ const proofSections = [
   },
 ];
 
+const proofChecklist = [
+  "Qwen Cloud API integration planned",
+  "Tool calling planned",
+  "Human approval gate planned",
+  "Generated artifacts planned",
+  "Webhook trigger planned",
+  "Alibaba Cloud proof path planned",
+];
+
+const buildStatus = [
+  {
+    label: "Already built",
+    items: [
+      "Premium command center and shell navigation",
+      "Seeded Flight Recorder timeline with tool-call proof",
+      "Typed run, tool, approval, and artifact data model",
+      "Judge-facing architecture proof page",
+    ],
+  },
+  {
+    label: "Planned next",
+    items: [
+      "Live Qwen Cloud planner request and response validation",
+      "Runtime executor with a real tool registry",
+      "Persistent local artifact writing and report export",
+      "Webhook bridge for external trigger intake",
+    ],
+  },
+];
+
 export default function ArchitecturePage() {
   return (
     <div className="space-y-6">
@@ -74,7 +104,7 @@ export default function ArchitecturePage() {
         <h1 className="mt-3 max-w-4xl text-4xl font-semibold tracking-tight text-white sm:text-5xl">
           ForgePilot is an autopilot runtime foundation, not a dashboard skin.
         </h1>
-        <p className="mt-5 max-w-3xl text-base leading-7 text-white/60">
+        <p className="mt-5 max-w-3xl text-base leading-7 text-white/66">
           The architecture is built around a real automation loop: trigger, planner,
           tool execution, approval, artifact writing, and a Flight Recorder timeline
           that preserves proof of what happened.
@@ -82,6 +112,42 @@ export default function ArchitecturePage() {
       </section>
 
       <ArchitectureMap />
+
+      <section className="grid gap-4 xl:grid-cols-[0.95fr_1.05fr]">
+        <article className="rounded-lg border border-teal-200/18 bg-teal-200/[0.055] p-5">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-teal-100/75">
+            Hackathon Proof Checklist
+          </p>
+          <h2 className="mt-3 text-2xl font-semibold text-white">
+            What judges can verify in this foundation
+          </h2>
+          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+            {proofChecklist.map((item) => (
+              <div key={item} className="rounded-lg border border-white/10 bg-black/25 p-3">
+                <p className="text-sm font-medium leading-6 text-white/72">{item}</p>
+              </div>
+            ))}
+          </div>
+        </article>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          {buildStatus.map((group) => (
+            <article key={group.label} className="rounded-lg border border-white/10 bg-white/[0.045] p-5">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-white/46">
+                {group.label}
+              </p>
+              <div className="mt-5 space-y-3">
+                {group.items.map((item) => (
+                  <div key={item} className="flex gap-3">
+                    <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-teal-200" />
+                    <p className="text-sm leading-6 text-white/68">{item}</p>
+                  </div>
+                ))}
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
 
       <section className="grid gap-4 lg:grid-cols-2">
         {proofSections.map((section) => (

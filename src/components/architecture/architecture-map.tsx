@@ -3,36 +3,43 @@ const runtimeStages = [
     label: "Trigger Engine",
     description: "Accepts manual commands, webhook payloads, or scheduled demo events.",
     checkpoint: "normalizes intent",
+    state: "built shell",
   },
   {
     label: "Qwen Planner",
-    description: "Converts messy intent into a structured execution plan with risk notes.",
-    checkpoint: "planned integration",
+    description: "Will convert messy intent into a structured execution plan with risk notes.",
+    checkpoint: "planned next",
+    state: "planned",
   },
   {
     label: "Runtime Executor",
-    description: "Steps through the plan, dispatches tools, and records every transition.",
-    checkpoint: "orchestrates",
+    description: "Will step through the plan, dispatch tools, and record every transition.",
+    checkpoint: "executor phase",
+    state: "planned",
   },
   {
     label: "Tool Registry",
-    description: "Defines allowed local tools, inputs, outputs, and safety boundaries.",
+    description: "Will define allowed local tools, inputs, outputs, and safety boundaries.",
     checkpoint: "scoped tools",
+    state: "planned",
   },
   {
     label: "Approval Gate",
-    description: "Pauses high-risk actions until the human operator approves them.",
+    description: "Pauses high-risk actions in the demo flow and will gate real writes later.",
     checkpoint: "human control",
+    state: "demo built",
   },
   {
     label: "Artifact Writer",
-    description: "Writes reviewed markdown, JSON reports, and scripts to local paths.",
+    description: "Will write reviewed markdown, JSON reports, and scripts to local paths.",
     checkpoint: "local output",
+    state: "planned",
   },
   {
     label: "Flight Recorder",
     description: "Seals the timeline with status, tool calls, approvals, and artifacts.",
     checkpoint: "full proof",
+    state: "demo built",
   },
 ];
 
@@ -45,8 +52,11 @@ export function ArchitectureMap() {
             Runtime Flow
           </p>
           <h2 className="mt-2 text-3xl font-semibold text-white">Trigger to proof, end to end</h2>
+          <p className="mt-3 max-w-4xl font-mono text-sm leading-6 text-white/70">
+            Trigger Engine → Qwen Planner → Runtime Executor → Tool Registry → Approval Gate → Artifact Writer → Flight Recorder
+          </p>
         </div>
-        <span className="w-fit rounded-full border border-white/10 bg-black/30 px-3 py-1.5 text-xs text-white/56">
+        <span className="w-fit rounded-full border border-white/10 bg-black/30 px-3 py-1.5 text-xs text-white/66">
           local-first foundation
         </span>
       </div>
@@ -54,10 +64,15 @@ export function ArchitectureMap() {
       <div className="mt-6 grid gap-3 xl:grid-cols-7">
         {runtimeStages.map((stage, index) => (
           <div key={stage.label} className="relative">
-            <div className="flex h-full flex-col rounded-lg border border-white/10 bg-black/25 p-4">
-              <p className="font-mono text-xs text-white/34">{String(index + 1).padStart(2, "0")}</p>
+            <div className="flex h-full flex-col rounded-lg border border-white/10 bg-black/28 p-4">
+              <div className="flex items-center justify-between gap-3">
+                <p className="font-mono text-xs text-white/46">{String(index + 1).padStart(2, "0")}</p>
+                <span className="rounded-full border border-white/10 bg-white/[0.045] px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.14em] text-white/58">
+                  {stage.state}
+                </span>
+              </div>
               <h3 className="mt-3 text-base font-semibold text-white">{stage.label}</h3>
-              <p className="mt-3 flex-1 text-sm leading-6 text-white/52">{stage.description}</p>
+              <p className="mt-3 flex-1 text-sm leading-6 text-white/62">{stage.description}</p>
               <span className="mt-4 w-fit rounded-full border border-teal-200/20 bg-teal-200/10 px-2.5 py-1 text-[11px] font-medium text-teal-100">
                 {stage.checkpoint}
               </span>
