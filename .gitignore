@@ -24,6 +24,13 @@
 .DS_Store
 *.pem
 
+# local editor and workspace metadata
+/.agents/
+/.cursor/
+AGENTS.md
+CLAUDE.md
+.windsurfrules
+
 # debug
 npm-debug.log*
 yarn-debug.log*
