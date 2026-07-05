@@ -2,6 +2,10 @@
 
 ForgePilot is a local-first autopilot runtime foundation that turns one messy command into a planned workflow, human approval checkpoint, generated artifacts, and a Flight Recorder timeline.
 
+## Current Version
+
+This repo is currently in foundation/demo state. It includes the premium application shell, command center, seeded Flight Recorder demo, architecture proof page, runtime types, and local setup docs. The live Qwen Cloud planner call, real tool executor, and persistent artifact writer are planned for the next phase.
+
 ## Hackathon Track
 
 Qwen Cloud Global AI Hackathon, Track 4: Autopilot Agent.
@@ -12,12 +16,12 @@ Trigger Engine -> Qwen Planner -> Runtime Executor -> Tool Registry -> Approval 
 
 ForgePilot is not a generic chatbot. The command input is only the trigger surface. The product foundation is organized around typed runs, tool calls, approvals, local artifacts, and auditable timeline events.
 
-## MVP Scope
+## Foundation Scope
 
 - Premium Next.js App Router interface with a dark mission-control shell.
 - Home Command Center with command intake, trigger selector, seeded recent runs, and runtime stats.
-- Live Flight Recorder demo page with timeline events, risk labels, tool names, approval preview, and artifact panel.
-- Architecture proof page explaining the runtime flow and judge-facing differentiators.
+- Live Flight Recorder demo page with timeline events, risk labels, tool names, approval checkpoint UI, tool-call proof cards, and artifact panel.
+- Architecture proof page explaining what is already built and what is planned next.
 - Strong TypeScript runtime types for runs, timeline steps, tool calls, approvals, and artifacts.
 - Seeded mock data for a hackathon submission-pack workflow.
 
@@ -32,7 +36,7 @@ Qwen Cloud is not wired to live API calls yet. The planned integration is:
 
 ## Planned Human Approval Gate
 
-The approval gate will pause high-impact actions before they run, including public-facing claims, file writes, deployments, outbound webhooks, and other actions that need explicit human control.
+The current UI shows an approval checkpoint in the demo recorder. The real approval gate will pause high-impact actions before they run, including public-facing claims, file writes, deployments, outbound webhooks, and other actions that need explicit human control.
 
 ## Planned Artifact Generation
 
@@ -51,16 +55,11 @@ The goal is to leave builders with useful files they can inspect, edit, commit, 
 ```bash
 npm install
 npm run dev
-```
-
-Open `http://localhost:3000` to view the Command Center.
-
-Useful checks:
-
-```bash
 npm run lint
 npm run build
 ```
+
+Open `http://localhost:3000` to view the Command Center.
 
 ## Environment Variables
 
