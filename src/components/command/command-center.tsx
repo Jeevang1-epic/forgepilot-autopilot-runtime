@@ -37,10 +37,11 @@ const executionPreview = [
 
 type QwenHealthData = {
   qwen: {
+    hasApiKey: boolean;
+    hasBaseUrl: boolean;
+    hasModel: boolean;
     configured: boolean;
-    apiKeyConfigured: boolean;
-    baseUrlConfigured: boolean;
-    modelConfigured: boolean;
+    modelName?: string;
   };
 };
 
@@ -158,10 +159,11 @@ export function CommandCenter() {
       <div className="mt-5">
         <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <span className="text-sm font-medium text-white/72">Planner mode</span>
+          <span className="text-sm font-medium text-white/72">Planner mode</span>
             <p className="mt-1 text-xs leading-5 text-white/50">
               Auto uses Qwen Cloud when env vars are available, otherwise ForgePilot
-              safely falls back to the local deterministic planner.
+              safely falls back to the local deterministic planner. Tool execution
+              still happens inside the local runtime.
             </p>
           </div>
           <span className="w-fit rounded-full border border-white/10 bg-black/30 px-3 py-1 text-xs capitalize text-white/62">

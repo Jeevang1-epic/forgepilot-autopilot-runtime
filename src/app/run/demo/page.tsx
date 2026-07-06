@@ -366,6 +366,20 @@ export default function DemoRunPage() {
               {run.qwenModel ?? "Not used"}
             </p>
           </div>
+          <div className="rounded-lg border border-white/10 bg-black/25 p-4 md:col-span-2">
+            <p className="text-xs uppercase tracking-[0.18em] text-white/42">JSON repair</p>
+            <p className="mt-2 text-sm font-semibold text-white">
+              {run.qwenJsonRepairUsed ? "Used and recorded" : "Not needed"}
+            </p>
+          </div>
+          <div className="rounded-lg border border-white/10 bg-black/25 p-4 md:col-span-2">
+            <p className="text-xs uppercase tracking-[0.18em] text-white/42">Fallback posture</p>
+            <p className="mt-2 text-sm leading-6 text-white/68">
+              {run.plannerModeUsed === "local_fallback"
+                ? "Fallback protected the run from config/model failure."
+                : "No fallback was needed for this run."}
+            </p>
+          </div>
         </div>
       </section>
 

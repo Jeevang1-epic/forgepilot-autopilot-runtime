@@ -101,6 +101,14 @@ const buildStatus = [
   },
 ];
 
+const qwenAdapterFacts = [
+  "Reads Qwen env vars only on the server.",
+  "Sends a safe tool manifest, not executable functions.",
+  "Validates planner JSON before runtime execution.",
+  "Records planner mode, warnings, model name, and JSON repair status.",
+  "Falls back locally in auto mode when config or model output is unsafe.",
+];
+
 export default function ArchitecturePage() {
   return (
     <div className="space-y-6">
@@ -120,6 +128,34 @@ export default function ArchitecturePage() {
       </section>
 
       <ArchitectureMap />
+
+      <section className="rounded-lg border border-cyan-200/18 bg-cyan-200/[0.05] p-5 shadow-2xl shadow-black/20 sm:p-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-100/75">
+              Qwen Planner Adapter
+            </p>
+            <h2 className="mt-3 text-2xl font-semibold text-white">
+              Qwen plans. ForgePilot executes.
+            </h2>
+            <p className="mt-3 max-w-3xl text-sm leading-6 text-white/64">
+              The adapter is intentionally narrow: it asks Qwen for structured planning
+              output, validates that output against ForgePilot schemas, and lets the
+              local runtime execute approved tools.
+            </p>
+          </div>
+          <span className="w-fit rounded-full border border-white/10 bg-black/30 px-3 py-1.5 text-xs text-white/66">
+            function-call loop planned next
+          </span>
+        </div>
+        <div className="mt-5 grid gap-3 md:grid-cols-5">
+          {qwenAdapterFacts.map((fact) => (
+            <div key={fact} className="rounded-lg border border-white/10 bg-black/25 p-3">
+              <p className="text-sm leading-6 text-white/70">{fact}</p>
+            </div>
+          ))}
+        </div>
+      </section>
 
       <section className="grid gap-4 xl:grid-cols-[0.95fr_1.05fr]">
         <article className="rounded-lg border border-teal-200/18 bg-teal-200/[0.055] p-5">

@@ -11,17 +11,17 @@ const plannerModes: Array<{
   {
     value: "auto",
     label: "Auto",
-    description: "Use Qwen Cloud when configured, otherwise local fallback.",
+    description: "Qwen if configured, local fallback otherwise.",
   },
   {
     value: "local",
     label: "Local",
-    description: "Use the deterministic built-in planner.",
+    description: "Deterministic offline planner.",
   },
   {
     value: "qwen",
     label: "Qwen Cloud",
-    description: "Require Qwen Cloud planner configuration.",
+    description: "Requires env config.",
   },
 ];
 
