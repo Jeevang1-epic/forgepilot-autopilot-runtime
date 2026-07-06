@@ -14,22 +14,22 @@ const proofSections = [
   },
   {
     eyebrow: "Planner",
-    title: "Qwen Cloud integration plan",
-    body: "The current MVP uses a deterministic local planner. The planned integration will call Qwen Cloud to produce structured plans, risk labels, and tool intents.",
+    title: "Qwen Cloud planner adapter",
+    body: "The runtime now has a Qwen planner adapter that can request structured plans when env vars are configured, then validate or safely fall back before execution.",
     points: [
-      "Use Qwen for plan generation from messy solo-builder commands.",
-      "Return JSON plan steps that match ForgePilot timeline and tool-call types.",
-      "Keep planner configuration explicit so the behavior can be reviewed.",
+      "Qwen is used for plan generation only; ForgePilot still owns execution.",
+      "Planner responses are validated as JSON with known tools, risk labels, and approval policy.",
+      "Auto mode falls back to the deterministic local planner if Qwen is not configured or output is invalid.",
     ],
   },
   {
     eyebrow: "Execution",
     title: "Tool-calling runtime",
-    body: "The runtime layer dispatches local tools registered with schemas, allowed effects, risk levels, and output contracts.",
+    body: "The runtime layer dispatches local tools registered with schemas, allowed effects, risk levels, and output contracts. Full Qwen function-call execution is planned next.",
     points: [
       "Tool calls are validated before execution and recorded after completion.",
-      "Local tools will handle scanning, writing, checklist generation, and report assembly.",
-      "Hosted or external tools can be added behind explicit registry entries later.",
+      "Local tools handle scanning, writing, checklist generation, and report assembly.",
+      "Qwen never receives executable functions, only a safe tool manifest.",
     ],
   },
   {
@@ -65,7 +65,8 @@ const proofSections = [
 ];
 
 const proofChecklist = [
-  "Qwen Cloud API integration planned",
+  "Qwen Cloud planner adapter added",
+  "Qwen function-call execution loop planned",
   "Typed tool calling implemented locally",
   "Human approval gate implemented locally",
   "Generated runtime artifacts implemented",
@@ -84,15 +85,14 @@ const buildStatus = [
       "Zod-validated local tool registry",
       "Normalized local API routes",
       "Runtime health check endpoint",
+      "Qwen planner adapter with JSON validation and local fallback",
       "Judge-facing architecture proof page",
     ],
   },
   {
     label: "Planned next",
     items: [
-      "Live Qwen Cloud planner request and response validation",
-      "Qwen tool-call selection",
-      "JSON repair and validation loop",
+      "Qwen function-call execution loop",
       "Persistent artifact storage beyond the in-memory MVP store",
       "Authenticated approval decisions for shared deployments",
       "Webhook bridge for external trigger intake",
@@ -113,8 +113,9 @@ export default function ArchitecturePage() {
         </h1>
         <p className="mt-5 max-w-3xl text-base leading-7 text-white/66">
           The local runtime now executes a real automation loop: trigger, deterministic
-          planner, typed tool execution, approval, artifact generation, and a Flight
-          Recorder timeline that preserves proof of what happened.
+          planner or Qwen planner adapter, typed tool execution, approval, artifact
+          generation, and a Flight Recorder timeline that preserves proof of what
+          happened.
         </p>
       </section>
 

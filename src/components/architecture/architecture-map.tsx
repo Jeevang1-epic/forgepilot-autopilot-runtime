@@ -7,9 +7,9 @@ const runtimeStages = [
   },
   {
     label: "Qwen Planner",
-    description: "Next phase: replace the deterministic local planner with Qwen plan output.",
-    checkpoint: "planned next",
-    state: "planned",
+    description: "Calls Qwen Cloud for structured plans when configured, with safe local fallback.",
+    checkpoint: "planner adapter",
+    state: "implemented",
   },
   {
     label: "Runtime Executor",
