@@ -58,7 +58,9 @@ export async function runRuntimeSmokeTest() {
         : `Found forbidden markers: ${markerHits.join(", ")}`,
   });
 
-  const run = createDemoAutopilotRun();
+  const run = createDemoAutopilotRun({
+    plannerMode: "local",
+  });
   const awaitingRun = await executeAutopilotRun(run.id);
   const approval = awaitingRun.approvalRequests.find(
     (request) => request.status === "requested",

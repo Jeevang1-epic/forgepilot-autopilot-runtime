@@ -14,7 +14,7 @@ export function buildDeterministicPlan(): PlanStep[] {
     {
       id: "plan-build",
       title: "Build deterministic local plan",
-      description: "Use the built-in local planner until Qwen Cloud planning is integrated.",
+      description: "Use the built-in local planner when requested or when Qwen fallback is needed.",
       status: "completed",
       riskLevel: "low",
     },
@@ -103,7 +103,7 @@ export function createRunRecord(input: CreateRunInput): ForgePilotRun {
     command: input.goal,
     triggerType: input.triggerType,
     status: "queued",
-    summary: "Run queued for local deterministic planning.",
+    summary: `Run queued for ${input.plannerMode ?? "auto"} planner mode.`,
     createdAt: now,
     startedAt: now,
     planSteps: buildDeterministicPlan(),
@@ -111,5 +111,9 @@ export function createRunRecord(input: CreateRunInput): ForgePilotRun {
     toolCalls: [],
     approvalRequests: [],
     artifacts: [],
+    plannerModeRequested: input.plannerMode ?? "auto",
+    plannerModeUsed: "local",
+    qwenConfigured: false,
+    plannerWarnings: [],
   };
 }

@@ -31,6 +31,10 @@ export type PlanStepStatus = "pending" | "running" | "completed" | "awaiting_app
 
 export type ToolProvider = "local" | "qwen-cloud" | "runtime";
 
+export type PlannerModeRequested = "local" | "qwen" | "auto";
+
+export type PlannerModeUsed = "local" | "qwen" | "qwen_repaired" | "local_fallback";
+
 export type PlanStep = {
   id: string;
   title: string;
@@ -135,11 +139,17 @@ export type ForgePilotRun = {
   artifacts: Artifact[];
   report?: Record<string, unknown>;
   error?: string;
+  plannerModeRequested: PlannerModeRequested;
+  plannerModeUsed: PlannerModeUsed;
+  qwenModel?: string;
+  qwenConfigured: boolean;
+  plannerWarnings: string[];
 };
 
 export type CreateRunInput = {
   goal: string;
   triggerType: TriggerType;
+  plannerMode?: PlannerModeRequested;
 };
 
 export type ApprovalDecision = "approved" | "rejected";

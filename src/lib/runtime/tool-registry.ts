@@ -30,6 +30,19 @@ export function listToolDefinitions() {
   }));
 }
 
+export function getPlannerToolManifest() {
+  return runtimeTools.map((tool) => ({
+    name: tool.name,
+    description: tool.description,
+    riskLevel: tool.riskLevel,
+    requiresApproval: tool.requiresApproval,
+    inputDescription:
+      tool.name === "write_markdown_file"
+        ? "files: array of markdown/json artifact drafts with fileName, kind, description, and content"
+        : "No user-provided input required for this demo workflow step.",
+  }));
+}
+
 export function getToolDefinition(name: string) {
   return toolMap.get(name);
 }

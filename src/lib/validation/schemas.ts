@@ -2,9 +2,26 @@ import { z } from "zod";
 
 export const triggerTypeSchema = z.enum(["manual", "webhook", "scheduled_demo"]);
 
+export const plannerModeSchema = z.enum(["local", "qwen", "auto"]);
+
 export const createRunSchema = z.object({
   goal: z.string().trim().min(8, "Goal must describe the intended workflow."),
   triggerType: triggerTypeSchema.default("manual"),
+  plannerMode: plannerModeSchema.default("auto"),
+});
+
+export const plannerRequestSchema = z.object({
+  goal: z.string().trim().min(8, "Goal must describe the intended workflow."),
+  plannerMode: plannerModeSchema.default("auto"),
+});
+
+export const demoRunRequestSchema = z.object({
+  goal: z
+    .string()
+    .trim()
+    .min(8, "Goal must describe the intended workflow.")
+    .optional(),
+  plannerMode: plannerModeSchema.default("auto"),
 });
 
 export const approvalDecisionSchema = z.object({
@@ -26,5 +43,7 @@ export const markdownFileInputSchema = z.object({
 });
 
 export type CreateRunSchemaInput = z.infer<typeof createRunSchema>;
+export type PlannerRequestSchemaInput = z.infer<typeof plannerRequestSchema>;
+export type DemoRunRequestSchemaInput = z.infer<typeof demoRunRequestSchema>;
 export type ApprovalDecisionSchemaInput = z.infer<typeof approvalDecisionSchema>;
 export type MarkdownFileInput = z.infer<typeof markdownFileInputSchema>;

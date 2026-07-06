@@ -1,4 +1,6 @@
 import { createRunSchema } from "@/lib/validation/schemas";
+import { getQwenConfigStatus } from "@/lib/qwen/client";
+import { createPlannerResolution } from "@/lib/qwen/planner";
 
 import {
   buildArtifactWriteInput,
@@ -17,7 +19,7 @@ import {
   recordToolCall,
 } from "./flight-recorder";
 import { getRun, saveRun } from "./run-store";
-import { executeRegisteredTool } from "./tool-registry";
+import { executeRegisteredTool, getToolDefinition } from "./tool-registry";
 import { createRunRecord, demoGoal } from "./trigger-engine";
 import type {
   ApprovalDecisionInput,
@@ -26,14 +28,8 @@ import type {
   ToolCall,
 } from "./types";
 
-const preApprovalToolNames = [
-  "scan_project_status",
-  "generate_submission_checklist",
-  "draft_devpost_description",
-  "generate_demo_script",
-  "draft_linkedin_post",
-  "generate_architecture_summary",
-] as const;
+const approvalToolName = "request_human_approval";
+const artifactWriterToolName = "write_markdown_file";
 
 function markPlanStep(
   run: ForgePilotRun,
@@ -130,6 +126,7 @@ async function executeToolForRun(run: ForgePilotRun, toolName: string, input: un
 export function createAutopilotRun(input: CreateRunInput) {
   const parsedInput = createRunSchema.parse(input);
   const run = createRunRecord(parsedInput);
+  run.qwenConfigured = getQwenConfigStatus().configured;
 
   recordTimelineStep(run, {
     title: "Trigger received",
@@ -141,11 +138,60 @@ export function createAutopilotRun(input: CreateRunInput) {
   return saveRun(run);
 }
 
-export function createDemoAutopilotRun() {
+export function createDemoAutopilotRun(input?: Partial<CreateRunInput>) {
   return createAutopilotRun({
-    goal: demoGoal,
-    triggerType: "manual",
+    goal: input?.goal ?? demoGoal,
+    triggerType: input?.triggerType ?? "manual",
+    plannerMode: input?.plannerMode ?? "auto",
   });
+}
+
+function getPreApprovalToolNames(run: ForgePilotRun) {
+  const seen = new Set<string>();
+  const toolNames: string[] = [];
+
+  for (const step of run.planSteps) {
+    if (
+      !step.toolName ||
+      step.toolName === approvalToolName ||
+      step.toolName === artifactWriterToolName
+    ) {
+      continue;
+    }
+
+    const tool = getToolDefinition(step.toolName);
+
+    if (!tool || tool.requiresApproval || seen.has(tool.name)) {
+      continue;
+    }
+
+    seen.add(tool.name);
+    toolNames.push(tool.name);
+  }
+
+  return toolNames;
+}
+
+function plannerTimelineTitle(run: ForgePilotRun) {
+  if (run.plannerModeUsed === "qwen") {
+    return "Qwen plan generated";
+  }
+
+  if (run.plannerModeUsed === "qwen_repaired") {
+    return "Qwen plan repaired and validated";
+  }
+
+  if (run.plannerModeUsed === "local_fallback") {
+    return "Local fallback plan selected";
+  }
+
+  return "Local deterministic plan selected";
+}
+
+function plannerToolName(run: ForgePilotRun) {
+  return run.plannerModeUsed === "qwen" || run.plannerModeUsed === "qwen_repaired"
+    ? "qwen.planner"
+    : "local.planner";
 }
 
 export async function executeAutopilotRun(runId: string) {
@@ -164,28 +210,44 @@ export async function executeAutopilotRun(runId: string) {
   }
 
   run.status = "planning";
-  run.summary = "Building deterministic local plan.";
-  recordTimelineStep(run, {
-    title: "Build deterministic local plan",
-    description: "Runtime created a local plan that Qwen Cloud will control in the next phase.",
-    toolName: "local.planner",
-    riskLevel: "low",
-  });
-
-  run.status = "running";
-  run.summary = "Executing local typed tools.";
 
   try {
-    for (const toolName of preApprovalToolNames) {
+    const planner = await createPlannerResolution({
+      goal: run.goal,
+      plannerMode: run.plannerModeRequested,
+    });
+
+    run.planSteps = planner.planSteps;
+    run.summary = planner.summary;
+    run.plannerModeRequested = planner.plannerModeRequested;
+    run.plannerModeUsed = planner.plannerModeUsed;
+    run.qwenConfigured = planner.qwenConfigured;
+    run.qwenModel = planner.qwenModel;
+    run.plannerWarnings = planner.plannerWarnings;
+
+    recordTimelineStep(run, {
+      title: plannerTimelineTitle(run),
+      description:
+        planner.plannerWarnings.length > 0
+          ? `${planner.summary} ${planner.plannerWarnings.join(" ")}`
+          : planner.summary,
+      toolName: plannerToolName(run),
+      riskLevel: run.plannerModeUsed === "local_fallback" ? "medium" : "low",
+    });
+
+    run.status = "running";
+    run.summary = "Executing typed tools from the validated planner output.";
+
+    for (const toolName of getPreApprovalToolNames(run)) {
       await executeToolForRun(run, toolName, {});
     }
 
-    const approvalResult = await executeToolForRun(run, "request_human_approval", {});
+    const approvalResult = await executeToolForRun(run, approvalToolName, {});
     const approval = parseApprovalRequest(approvalResult.data);
     run.approvalRequests.push(approval);
     run.status = "awaiting_approval";
     run.summary = "Runtime paused at the approval gate before final artifact generation.";
-    markPlanStep(run, "request_human_approval", "awaiting_approval");
+    markPlanStep(run, approvalToolName, "awaiting_approval");
     recordTimelineStep(run, {
       title: "Human approval requested",
       description: approval.reason ?? approval.summary,
@@ -246,7 +308,7 @@ export async function continueRunAfterApproval(runId: string) {
   run.summary = "Approval granted. Creating final artifact pack.";
 
   const artifactInput = buildArtifactWriteInput(run);
-  const artifactResult = await executeToolForRun(run, "write_markdown_file", artifactInput);
+  const artifactResult = await executeToolForRun(run, artifactWriterToolName, artifactInput);
   const artifacts = parseArtifacts(artifactResult.data);
   run.artifacts = artifacts;
 
