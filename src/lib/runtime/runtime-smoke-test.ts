@@ -1,5 +1,4 @@
 import { existsSync } from "node:fs";
-import { join } from "node:path";
 
 import { approveRunAction, createDemoAutopilotRun, executeAutopilotRun } from "./run-engine";
 import { listToolDefinitions } from "./tool-registry";
@@ -30,7 +29,7 @@ type HealthCheck = {
 };
 
 function markerExists(markerPath: string) {
-  return existsSync(join(process.cwd(), markerPath));
+  return existsSync(markerPath);
 }
 
 export async function runRuntimeSmokeTest() {
