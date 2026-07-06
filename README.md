@@ -4,9 +4,9 @@ ForgePilot is a local-first autopilot runtime foundation that turns one messy co
 
 ## Current Version
 
-This repo is currently in local runtime MVP state. It includes the premium application shell, command center, Flight Recorder page, architecture proof page, typed local runtime engine, Zod-validated tool registry, approval gate, in-memory run store, generated artifact objects, README, and `.env.example`.
+This repo is currently in foundation/demo state with a local runtime MVP plus a Qwen Cloud planner adapter. It includes the premium application shell, command center, Flight Recorder page, architecture proof page, typed local runtime engine, Zod-validated tool registry, approval gate, in-memory run store, generated artifact objects, normalized API routes, README, and `.env.example`.
 
-Qwen Cloud is not integrated yet. The live Qwen Cloud planner call is planned for the next phase.
+Qwen Cloud can be used as the planning brain when `QWEN_API_KEY`, `QWEN_BASE_URL`, and `QWEN_MODEL` are configured. Tool execution is still owned by ForgePilot through the local typed tool registry. Full Qwen function-call execution is planned next.
 
 ## Hackathon Track
 
@@ -29,10 +29,12 @@ ForgePilot is not a generic chatbot. The command input is only the trigger surfa
 
 ## Runtime Engine
 
-The runtime engine is deterministic and local for now. It is designed so Qwen Cloud can control planning in the next phase without changing the rest of the runtime contract.
+The runtime engine remains local-first. Qwen can now control planning when configured, but ForgePilot still validates the plan and executes all tools itself.
 
-- `trigger-engine.ts` creates a run and deterministic local plan.
+- `trigger-engine.ts` creates a run and initial local plan state.
+- `src/lib/qwen/*` handles Qwen planner configuration, prompts, response validation, JSON repair, and local fallback.
 - `tool-registry.ts` registers tools with name, description, input schema, risk level, approval requirement, and execute function.
+- `tool-registry.ts` also exposes planner-safe metadata through `getPlannerToolManifest()` without exposing executable functions.
 - `run-engine.ts` executes the plan, records tool calls, pauses at approval, and completes the run after approval.
 - `approval-gate.ts` handles approve/reject decisions for the pending action.
 - `artifact-writer.ts` creates safe artifact objects in runtime state instead of relying on server filesystem writes.
@@ -45,7 +47,7 @@ The demo workflow pauses at `awaiting_approval` before final artifacts are gener
 ## Runtime Lifecycle
 
 1. Trigger Engine creates a run from a goal and trigger type.
-2. The deterministic local planner creates plan steps.
+2. The selected planner mode creates plan steps: `local`, `qwen`, or `auto`.
 3. Runtime Executor dispatches Zod-validated local tools.
 4. Flight Recorder stores timeline and tool-call records.
 5. Approval Gate pauses the run at `awaiting_approval`.
@@ -53,14 +55,36 @@ The demo workflow pauses at `awaiting_approval` before final artifacts are gener
 7. Artifact Writer creates runtime artifact objects.
 8. Flight Recorder seals the run report after completion.
 
-## Planned Qwen Cloud Integration
+## Qwen Cloud Planner Setup
 
-Qwen Cloud is not wired to live API calls yet. The planned integration is:
+Copy `.env.example` and provide these values when you want to test Qwen planning:
 
-- Send the normalized run objective to Qwen Cloud.
-- Request a structured JSON plan with ordered steps, tool intents, risk levels, and approval requirements.
-- Validate the returned plan against ForgePilot runtime types before execution.
-- Store planner output in the Flight Recorder so judges can inspect how the plan became a workflow.
+```bash
+QWEN_API_KEY=
+QWEN_BASE_URL=
+QWEN_MODEL=
+```
+
+The key is never exposed to client components or health responses.
+
+Planner modes:
+
+- `local`: always use the deterministic built-in planner.
+- `qwen`: require Qwen Cloud config and fail cleanly if it is missing.
+- `auto`: use Qwen Cloud when all env vars exist, otherwise fall back to the local deterministic planner.
+
+Fallback behavior:
+
+- If Qwen is not configured, `auto` records `local_fallback` and continues safely.
+- If Qwen returns fenced JSON or surrounding text, ForgePilot attempts JSON repair and records `qwen_repaired`.
+- If Qwen output is still invalid, ForgePilot falls back safely to the deterministic local planner.
+- Qwen is the planning brain only. The app executes tools through the typed local registry.
+
+Planned next Qwen work:
+
+- Qwen function-call execution loop.
+- Richer planner/tool evaluation traces.
+- Stronger artifact export and durable storage.
 
 ## Human Approval Gate
 
@@ -102,6 +126,8 @@ API responses use a consistent shape:
 - `GET /api/runs/[id]` returns a single run.
 - `POST /api/approvals` accepts `approvalId` and `decision` (`approved` or `rejected`).
 - `GET /api/runs/health` runs a local runtime self-check.
+- `GET /api/qwen/health` returns Qwen config presence without revealing secrets.
+- `POST /api/qwen/plan` tests planner output for `goal` and `plannerMode`.
 
 ## Local Setup
 
@@ -123,21 +149,29 @@ Demo flow:
 4. Open `View Run Report` to inspect the JSON report.
 5. Use `Copy Run Report` if you want the formatted report in your clipboard.
 
+Qwen planner demo flow:
+
+1. Run `npm run dev`.
+2. Open `http://localhost:3000/run/demo`.
+3. Select `Auto`, `Local`, or `Qwen Cloud` planner mode.
+4. Click `Start Fresh Demo Run`.
+5. Approve the final artifact pack.
+6. Inspect the Planner Brain card and run report.
+
 Runtime health check:
 
 ```bash
 # with the dev server running
 curl http://localhost:3000/api/runs/health
+curl http://localhost:3000/api/qwen/health
 ```
 
 The health check verifies the tool registry, demo run pause, approval completion, artifact generation, and forbidden marker-file absence.
 
-## Environment Variables
-
-Copy `.env.example` when wiring live Qwen Cloud credentials later:
+Planner route local-mode smoke test:
 
 ```bash
-QWEN_API_KEY=
-QWEN_BASE_URL=
-QWEN_MODEL=
+curl -X POST http://localhost:3000/api/qwen/plan \
+  -H "Content-Type: application/json" \
+  -d "{\"goal\":\"Prepare my Qwen Cloud hackathon submission pack.\",\"plannerMode\":\"local\"}"
 ```
