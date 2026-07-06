@@ -1,8 +1,9 @@
 "use client";
 
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import type { ForgePilotRun } from "@/lib/runtime/types";
 import type { TriggerType } from "@/lib/runtime/types";
 import { cn } from "@/lib/utils";
 
@@ -18,8 +19,40 @@ const executionPreview = [
 ];
 
 export function CommandCenter() {
+  const router = useRouter();
   const [command, setCommand] = useState(defaultCommand);
   const [triggerType, setTriggerType] = useState<TriggerType>("manual");
+  const [isStarting, setIsStarting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function startDemoRun() {
+    setIsStarting(true);
+    setError(null);
+
+    try {
+      const response = await fetch("/api/runs/demo", {
+        method: "POST",
+      });
+      const payload = (await response.json()) as {
+        run?: ForgePilotRun;
+        error?: string;
+      };
+
+      if (!response.ok || !payload.run) {
+        throw new Error(payload.error ?? "Unable to start demo run.");
+      }
+
+      router.push(`/run/demo?runId=${payload.run.id}`);
+    } catch (startError) {
+      setError(
+        startError instanceof Error
+          ? startError.message
+          : "Unable to start demo run.",
+      );
+    } finally {
+      setIsStarting(false);
+    }
+  }
 
   return (
     <section className="rounded-lg border border-white/10 bg-white/[0.055] p-5 shadow-2xl shadow-black/30 backdrop-blur-xl sm:p-6">
@@ -70,14 +103,17 @@ export function CommandCenter() {
 
       <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm leading-6 text-white/62">
-          The run will pause before writing artifacts that include public-facing claims.
+          {error ??
+            "The run will pause before writing artifacts that include public-facing claims."}
         </p>
-        <Link
-          href="/run/demo"
-          className="inline-flex h-12 items-center justify-center rounded-lg bg-teal-200 px-5 text-sm font-semibold text-slate-950 shadow-lg shadow-teal-950/30 transition hover:bg-teal-100"
+        <button
+          type="button"
+          onClick={startDemoRun}
+          disabled={isStarting}
+          className="inline-flex h-12 items-center justify-center rounded-lg bg-teal-200 px-5 text-sm font-semibold text-slate-950 shadow-lg shadow-teal-950/30 transition hover:bg-teal-100 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          Start Autopilot Run
-        </Link>
+          {isStarting ? "Starting Runtime..." : "Start Autopilot Run"}
+        </button>
       </div>
     </section>
   );
