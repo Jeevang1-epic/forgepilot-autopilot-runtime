@@ -3,7 +3,8 @@ export type RuntimeErrorCode =
   | "RUN_NOT_FOUND"
   | "APPROVAL_NOT_FOUND"
   | "RUN_NOT_APPROVABLE"
-  | "TOOL_EXECUTION_FAILED";
+  | "TOOL_EXECUTION_FAILED"
+  | "QWEN_NOT_CONFIGURED";
 
 export class RuntimeError extends Error {
   code: RuntimeErrorCode;
