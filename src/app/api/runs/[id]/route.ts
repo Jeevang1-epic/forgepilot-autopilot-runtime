@@ -1,5 +1,4 @@
-import { NextResponse } from "next/server";
-
+import { fail, ok } from "@/lib/runtime/api-response";
 import { getRun } from "@/lib/runtime/run-store";
 
 export const dynamic = "force-dynamic";
@@ -15,8 +14,8 @@ export async function GET(_request: Request, context: RunRouteContext) {
   const run = getRun(id);
 
   if (!run) {
-    return NextResponse.json({ error: "Run not found." }, { status: 404 });
+    return fail("RUN_NOT_FOUND", "Run not found.", 404);
   }
 
-  return NextResponse.json({ run });
+  return ok({ run });
 }

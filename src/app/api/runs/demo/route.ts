@@ -1,5 +1,4 @@
-import { NextResponse } from "next/server";
-
+import { failFromError, ok } from "@/lib/runtime/api-response";
 import {
   createDemoAutopilotRun,
   executeAutopilotRun,
@@ -12,14 +11,8 @@ export async function POST() {
     const run = createDemoAutopilotRun();
     const executedRun = await executeAutopilotRun(run.id);
 
-    return NextResponse.json({ run: executedRun }, { status: 201 });
+    return ok({ run: executedRun }, 201);
   } catch (error) {
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error ? error.message : "Unable to start demo run.",
-      },
-      { status: 400 },
-    );
+    return failFromError(error);
   }
 }

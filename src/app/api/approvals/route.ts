@@ -1,5 +1,4 @@
-import { NextResponse } from "next/server";
-
+import { failFromError, ok } from "@/lib/runtime/api-response";
 import { approveRunAction, rejectRunAction } from "@/lib/runtime/run-engine";
 import { approvalDecisionSchema } from "@/lib/validation/schemas";
 
@@ -14,16 +13,8 @@ export async function POST(request: Request) {
         ? await approveRunAction(input)
         : await rejectRunAction(input);
 
-    return NextResponse.json({ run });
+    return ok({ run });
   } catch (error) {
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Unable to process approval decision.",
-      },
-      { status: 400 },
-    );
+    return failFromError(error);
   }
 }

@@ -1,5 +1,4 @@
-import { NextResponse } from "next/server";
-
+import { failFromError, ok } from "@/lib/runtime/api-response";
 import { createAutopilotRun } from "@/lib/runtime/run-engine";
 import { listRuns } from "@/lib/runtime/run-store";
 import { createRunSchema } from "@/lib/validation/schemas";
@@ -7,7 +6,7 @@ import { createRunSchema } from "@/lib/validation/schemas";
 export const dynamic = "force-dynamic";
 
 export function GET() {
-  return NextResponse.json({
+  return ok({
     runs: listRuns(),
   });
 }
@@ -18,13 +17,8 @@ export async function POST(request: Request) {
     const input = createRunSchema.parse(body);
     const run = createAutopilotRun(input);
 
-    return NextResponse.json({ run }, { status: 201 });
+    return ok({ run }, 201);
   } catch (error) {
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : "Unable to create run.",
-      },
-      { status: 400 },
-    );
+    return failFromError(error);
   }
 }
