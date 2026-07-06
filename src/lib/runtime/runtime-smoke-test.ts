@@ -69,6 +69,11 @@ export async function runRuntimeSmokeTest() {
   const approval = awaitingRun.approvalRequests.find(
     (request) => request.status === "requested",
   );
+  const demoRunHealth = {
+    status: awaitingRun.status,
+    plannerModeUsed: awaitingRun.plannerModeUsed,
+    hasPendingApproval: Boolean(approval),
+  };
 
   checks.push({
     name: "demo run pauses",
@@ -103,11 +108,7 @@ export async function runRuntimeSmokeTest() {
     qwenConfigSafeStatus,
     plannerModesAvailable: ["local", "qwen", "auto"] as const,
     toolManifestCount: toolManifest.length,
-    demoRunHealth: {
-      status: awaitingRun.status,
-      plannerModeUsed: awaitingRun.plannerModeUsed,
-      hasPendingApproval: Boolean(approval),
-    },
+    demoRunHealth,
     approvalHealth: {
       status: completedRun.status,
       approvalCount: completedRun.approvalRequests.length,
