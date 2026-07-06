@@ -15,7 +15,7 @@ const proofSections = [
   {
     eyebrow: "Planner",
     title: "Qwen Cloud integration plan",
-    body: "The current MVP uses seeded planner data. The planned integration will call Qwen Cloud to produce structured plans, risk labels, and tool intents.",
+    body: "The current MVP uses a deterministic local planner. The planned integration will call Qwen Cloud to produce structured plans, risk labels, and tool intents.",
     points: [
       "Use Qwen for plan generation from messy solo-builder commands.",
       "Return JSON plan steps that match ForgePilot timeline and tool-call types.",
@@ -24,10 +24,10 @@ const proofSections = [
   },
   {
     eyebrow: "Execution",
-    title: "Tool-calling runtime plan",
-    body: "The runtime layer will only dispatch tools registered with schemas, allowed effects, and output contracts.",
+    title: "Tool-calling runtime",
+    body: "The runtime layer dispatches local tools registered with schemas, allowed effects, risk levels, and output contracts.",
     points: [
-      "Tool calls will be validated before execution and recorded after completion.",
+      "Tool calls are validated before execution and recorded after completion.",
       "Local tools will handle scanning, writing, checklist generation, and report assembly.",
       "Hosted or external tools can be added behind explicit registry entries later.",
     ],
@@ -35,7 +35,7 @@ const proofSections = [
   {
     eyebrow: "Safety",
     title: "Human-in-the-loop safety",
-    body: "ForgePilot treats approvals as a first-class runtime primitive, especially before public claims, file writes, deployments, or outbound automation.",
+    body: "ForgePilot treats approvals as a first-class runtime primitive, especially before final artifacts, public claims, deployments, or outbound automation.",
     points: [
       "Risk levels are attached to timeline steps so high-impact actions stand out.",
       "Approval requests preserve what was requested, when, and who approved it.",
@@ -45,9 +45,9 @@ const proofSections = [
   {
     eyebrow: "Artifacts",
     title: "Local-first artifact generation",
-    body: "The output target is a local artifact pack that builders can inspect, edit, commit, or submit.",
+    body: "The output target is a local runtime artifact pack that builders can inspect, edit, commit, or submit.",
     points: [
-      "Markdown and JSON outputs stay in the workspace rather than disappearing in chat history.",
+      "Markdown and JSON outputs are represented as runtime artifact objects instead of disappearing in chat history.",
       "Run reports can be used as proof for demos, audits, and project handoff.",
       "The artifact writer is intentionally separate from the planner for clearer control.",
     ],
@@ -66,9 +66,9 @@ const proofSections = [
 
 const proofChecklist = [
   "Qwen Cloud API integration planned",
-  "Tool calling planned",
-  "Human approval gate planned",
-  "Generated artifacts planned",
+  "Typed tool calling implemented locally",
+  "Human approval gate implemented locally",
+  "Generated runtime artifacts implemented",
   "Webhook trigger planned",
   "Alibaba Cloud proof path planned",
 ];
@@ -78,8 +78,9 @@ const buildStatus = [
     label: "Already built",
     items: [
       "Premium command center and shell navigation",
-      "Seeded Flight Recorder timeline with tool-call proof",
+      "Local runtime executor with Flight Recorder proof",
       "Typed run, tool, approval, and artifact data model",
+      "Zod-validated local tool registry",
       "Judge-facing architecture proof page",
     ],
   },
@@ -87,8 +88,8 @@ const buildStatus = [
     label: "Planned next",
     items: [
       "Live Qwen Cloud planner request and response validation",
-      "Runtime executor with a real tool registry",
-      "Persistent local artifact writing and report export",
+      "Persistent artifact storage beyond the in-memory MVP store",
+      "Authenticated approval decisions for shared deployments",
       "Webhook bridge for external trigger intake",
     ],
   },
@@ -105,9 +106,9 @@ export default function ArchitecturePage() {
           ForgePilot is an autopilot runtime foundation, not a dashboard skin.
         </h1>
         <p className="mt-5 max-w-3xl text-base leading-7 text-white/66">
-          The architecture is built around a real automation loop: trigger, planner,
-          tool execution, approval, artifact writing, and a Flight Recorder timeline
-          that preserves proof of what happened.
+          The local runtime now executes a real automation loop: trigger, deterministic
+          planner, typed tool execution, approval, artifact generation, and a Flight
+          Recorder timeline that preserves proof of what happened.
         </p>
       </section>
 
