@@ -50,6 +50,18 @@ export type ToolExecutionResult = {
   data?: unknown;
 };
 
+export type ToolDefinition<TInput = unknown> = {
+  name: string;
+  description: string;
+  inputSchema: z.ZodType<TInput>;
+  riskLevel: RiskLevel;
+  requiresApproval: boolean;
+  execute: (
+    input: TInput,
+    context: ToolExecutionContext,
+  ) => ToolExecutionResult | Promise<ToolExecutionResult>;
+};
+
 export type ToolCall = {
   id: string;
   name: string;
@@ -134,3 +146,4 @@ export type ApprovalDecisionInput = {
   approvalId: string;
   decision: ApprovalDecision;
 };
+import type { z } from "zod";
