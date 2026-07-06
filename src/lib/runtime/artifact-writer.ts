@@ -95,6 +95,7 @@ export function buildArtifactWriteInput(run: ForgePilotRun): MarkdownFileInput {
     plannerModeUsed: run.plannerModeUsed,
     qwenConfigured: run.qwenConfigured,
     qwenModel: run.qwenModel,
+    qwenJsonRepairUsed: run.qwenJsonRepairUsed,
     timelineCount: run.timeline.length,
     toolCallCount: run.toolCalls.length,
     approvalCount: run.approvalRequests.length,

@@ -14,7 +14,16 @@ export async function POST(request: Request) {
     });
 
     return ok({
-      planner,
+      planner: {
+        summary: planner.summary,
+        plannerModeRequested: planner.plannerModeRequested,
+        plannerModeUsed: planner.plannerModeUsed,
+        qwenConfigured: planner.qwenConfigured,
+        qwenModel: planner.qwenModel,
+        qwenJsonRepairUsed: planner.qwenJsonRepairUsed,
+        plannerWarnings: planner.plannerWarnings,
+        planSteps: planner.planSteps,
+      },
     });
   } catch (error) {
     return failFromError(error);

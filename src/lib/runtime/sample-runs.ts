@@ -238,6 +238,7 @@ export const demoRun: ForgePilotRun = {
   plannerModeRequested: "auto",
   plannerModeUsed: "local_fallback",
   qwenConfigured: false,
+  qwenJsonRepairUsed: false,
   plannerWarnings: [
     "Qwen Cloud env vars are not configured, so auto mode used the local deterministic planner.",
   ],
@@ -311,6 +312,7 @@ export const recentRuns: ForgePilotRun[] = [
     plannerModeRequested: "local",
     plannerModeUsed: "local",
     qwenConfigured: false,
+    qwenJsonRepairUsed: false,
     plannerWarnings: [],
     planSteps: [],
     timeline: [],
@@ -331,6 +333,7 @@ export const recentRuns: ForgePilotRun[] = [
     plannerModeRequested: "auto",
     plannerModeUsed: "local_fallback",
     qwenConfigured: false,
+    qwenJsonRepairUsed: false,
     plannerWarnings: [
       "Webhook rehearsal used local fallback because Qwen Cloud credentials were not configured.",
     ],

@@ -48,6 +48,7 @@ export function buildRunReport(run: ForgePilotRun) {
     plannerModeUsed: run.plannerModeUsed,
     qwenConfigured: run.qwenConfigured,
     qwenModel: run.qwenModel,
+    qwenJsonRepairUsed: run.qwenJsonRepairUsed,
     plannerWarnings: run.plannerWarnings,
     planSteps: run.planSteps,
     summary: run.summary,

@@ -1,7 +1,9 @@
 import { existsSync } from "node:fs";
 
+import { getQwenConfigStatus } from "@/lib/qwen/client";
+
 import { approveRunAction, createDemoAutopilotRun, executeAutopilotRun } from "./run-engine";
-import { listToolDefinitions } from "./tool-registry";
+import { getPlannerToolManifest, listToolDefinitions } from "./tool-registry";
 
 const expectedTools = [
   "scan_project_status",
@@ -34,7 +36,9 @@ function markerExists(markerPath: string) {
 
 export async function runRuntimeSmokeTest() {
   const checks: HealthCheck[] = [];
+  const qwenConfigSafeStatus = getQwenConfigStatus();
   const tools = listToolDefinitions();
+  const toolManifest = getPlannerToolManifest();
   const toolNames = new Set(tools.map((tool) => tool.name));
   const missingTools = expectedTools.filter((toolName) => !toolNames.has(toolName));
 
@@ -96,6 +100,24 @@ export async function runRuntimeSmokeTest() {
   return {
     ok,
     checkedAt: new Date().toISOString(),
+    qwenConfigSafeStatus,
+    plannerModesAvailable: ["local", "qwen", "auto"] as const,
+    toolManifestCount: toolManifest.length,
+    demoRunHealth: {
+      status: awaitingRun.status,
+      plannerModeUsed: awaitingRun.plannerModeUsed,
+      hasPendingApproval: Boolean(approval),
+    },
+    approvalHealth: {
+      status: completedRun.status,
+      approvalCount: completedRun.approvalRequests.length,
+    },
+    artifactHealth: {
+      artifactCount: completedRun.artifacts.length,
+      hasRunReport: completedRun.artifacts.some(
+        (artifact) => artifact.fileName === "run-report.json",
+      ),
+    },
     checks,
     runId: completedRun.id,
   };
