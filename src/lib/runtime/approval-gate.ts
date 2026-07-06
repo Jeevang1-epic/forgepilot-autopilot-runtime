@@ -1,5 +1,6 @@
 import { approvalDecisionSchema } from "@/lib/validation/schemas";
 
+import { RuntimeError } from "./errors";
 import { buildRunReport, recordTimelineStep } from "./flight-recorder";
 import { findRunByApprovalId, saveRun } from "./run-store";
 import type { ApprovalDecisionInput, ApprovalRequest, ForgePilotRun } from "./types";
@@ -27,7 +28,11 @@ export function approvePendingApproval(input: ApprovalDecisionInput) {
   const run = findRunByApprovalId(parsedInput.approvalId);
 
   if (!run) {
-    throw new Error("Approval request not found.");
+    throw new RuntimeError(
+      "APPROVAL_NOT_FOUND",
+      "Approval request not found.",
+      404,
+    );
   }
 
   const approval = run.approvalRequests.find(
@@ -35,7 +40,11 @@ export function approvePendingApproval(input: ApprovalDecisionInput) {
   );
 
   if (!approval) {
-    throw new Error("Approval request not found.");
+    throw new RuntimeError(
+      "APPROVAL_NOT_FOUND",
+      "Approval request not found.",
+      404,
+    );
   }
 
   if (approval.status !== "requested") {
@@ -59,7 +68,7 @@ export function approvePendingApproval(input: ApprovalDecisionInput) {
     approval.rejectedAt = new Date().toISOString();
     run.status = "failed";
     run.completedAt = new Date().toISOString();
-    run.finalSummary = "Run stopped safely after approval was rejected.";
+    run.summary = "Run stopped safely after approval was rejected.";
     run.error = "Final artifact generation was rejected by the operator.";
 
     recordTimelineStep(run, {

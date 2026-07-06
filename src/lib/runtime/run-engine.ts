@@ -10,6 +10,7 @@ import {
   getPendingApproval,
   parseApprovalRequest,
 } from "./approval-gate";
+import { RuntimeError } from "./errors";
 import {
   buildRunReport,
   recordTimelineStep,
@@ -34,7 +35,11 @@ const preApprovalToolNames = [
   "generate_architecture_summary",
 ] as const;
 
-function markPlanStep(run: ForgePilotRun, toolName: string, status: "running" | "completed" | "awaiting_approval") {
+function markPlanStep(
+  run: ForgePilotRun,
+  toolName: string,
+  status: "running" | "completed" | "awaiting_approval" | "pending",
+) {
   const planStep = run.planSteps.find((step) => step.toolName === toolName);
 
   if (planStep) {
@@ -54,38 +59,72 @@ async function executeToolForRun(run: ForgePilotRun, toolName: string, input: un
   const startedAt = new Date().toISOString();
   markPlanStep(run, toolName, "running");
 
-  const { tool, parsedInput, result } = await executeRegisteredTool(toolName, input, {
-    runId: run.id,
-    goal: run.goal,
-    now: startedAt,
-  });
+  try {
+    const { tool, parsedInput, result } = await executeRegisteredTool(toolName, input, {
+      runId: run.id,
+      goal: run.goal,
+      now: startedAt,
+    });
 
-  const completedAt = new Date().toISOString();
-  const toolCall: ToolCall = {
-    id: `tool-${crypto.randomUUID()}`,
-    name: tool.name,
-    provider: tool.name === "write_markdown_file" ? "runtime" : "local",
-    status: "completed",
-    riskLevel: tool.riskLevel,
-    inputSummary: summarizeInput(parsedInput),
-    input: parsedInput,
-    outputSummary: result.summary,
-    output: result.data,
-    startedAt,
-    completedAt,
-  };
+    const completedAt = new Date().toISOString();
+    const toolCall: ToolCall = {
+      id: `tool-${crypto.randomUUID()}`,
+      name: tool.name,
+      provider: tool.name === "write_markdown_file" ? "runtime" : "local",
+      status: "completed",
+      riskLevel: tool.riskLevel,
+      inputSummary: summarizeInput(parsedInput),
+      input: parsedInput,
+      outputSummary: result.summary,
+      output: result.data,
+      startedAt,
+      completedAt,
+    };
 
-  recordToolCall(run, toolCall);
-  markPlanStep(run, toolName, "completed");
-  recordTimelineStep(run, {
-    title: tool.description,
-    description: result.summary,
-    toolName: tool.name,
-    toolCallId: toolCall.id,
-    riskLevel: tool.riskLevel,
-  });
+    recordToolCall(run, toolCall);
+    markPlanStep(run, toolName, "completed");
+    recordTimelineStep(run, {
+      title: tool.description,
+      description: result.summary,
+      toolName: tool.name,
+      toolCallId: toolCall.id,
+      riskLevel: tool.riskLevel,
+    });
 
-  return result;
+    return result;
+  } catch (error) {
+    const failedAt = new Date().toISOString();
+    const toolCall: ToolCall = {
+      id: `tool-${crypto.randomUUID()}`,
+      name: toolName,
+      provider: toolName === "write_markdown_file" ? "runtime" : "local",
+      status: "failed",
+      riskLevel: "medium",
+      inputSummary: summarizeInput(input),
+      input,
+      outputSummary:
+        error instanceof Error ? error.message : "Tool execution failed.",
+      startedAt,
+      completedAt: failedAt,
+    };
+
+    recordToolCall(run, toolCall);
+    markPlanStep(run, toolName, "pending");
+    recordTimelineStep(run, {
+      title: "Tool execution failed",
+      description: toolCall.outputSummary ?? "Tool execution failed.",
+      status: "blocked",
+      toolName,
+      toolCallId: toolCall.id,
+      riskLevel: toolCall.riskLevel,
+    });
+
+    throw new RuntimeError(
+      "TOOL_EXECUTION_FAILED",
+      toolCall.outputSummary ?? "Tool execution failed.",
+      400,
+    );
+  }
 }
 
 export function createAutopilotRun(input: CreateRunInput) {
@@ -113,10 +152,14 @@ export async function executeAutopilotRun(runId: string) {
   const run = getRun(runId);
 
   if (!run) {
-    throw new Error("Run not found.");
+    throw new RuntimeError("RUN_NOT_FOUND", "Run not found.", 404);
   }
 
-  if (run.status === "awaiting_approval" || run.status === "completed") {
+  if (
+    run.status === "awaiting_approval" ||
+    run.status === "completed" ||
+    run.status === "failed"
+  ) {
     return run;
   }
 
@@ -156,7 +199,7 @@ export async function executeAutopilotRun(runId: string) {
     run.status = "failed";
     run.error = error instanceof Error ? error.message : "Runtime execution failed.";
     run.completedAt = new Date().toISOString();
-    run.finalSummary = "Run failed during local tool execution.";
+    run.summary = "Run failed during local tool execution.";
     run.report = buildRunReport(run);
     return saveRun(run);
   }
@@ -166,17 +209,37 @@ export async function continueRunAfterApproval(runId: string) {
   const run = getRun(runId);
 
   if (!run) {
-    throw new Error("Run not found.");
+    throw new RuntimeError("RUN_NOT_FOUND", "Run not found.", 404);
   }
 
   const pendingApproval = getPendingApproval(run);
 
   if (pendingApproval) {
-    throw new Error("Run still requires approval.");
+    throw new RuntimeError(
+      "RUN_NOT_APPROVABLE",
+      "Run still requires approval.",
+      400,
+    );
   }
 
   if (run.status === "completed") {
     return run;
+  }
+
+  if (run.status === "failed") {
+    return run;
+  }
+
+  if (run.artifacts.length > 0) {
+    run.status = "completed";
+    run.completedAt = run.completedAt ?? new Date().toISOString();
+    run.finalSummary =
+      run.finalSummary ??
+      "Local autopilot run completed with artifacts already present.";
+    run.summary = run.finalSummary;
+    run.report = buildRunReport(run);
+    refreshRunReportArtifact(run);
+    return saveRun(run);
   }
 
   run.status = "running";
@@ -222,7 +285,7 @@ export async function continueRunAfterApproval(runId: string) {
 export async function approveRunAction(input: ApprovalDecisionInput) {
   const run = approvePendingApproval(input);
 
-  if (input.decision === "rejected") {
+  if (input.decision === "rejected" || run.status === "failed") {
     return run;
   }
 
@@ -246,7 +309,7 @@ export function sealFailedRun(runId: string, error: string) {
   run.status = "failed";
   run.error = error;
   run.completedAt = new Date().toISOString();
-  run.finalSummary = "Run stopped before completion.";
+  run.summary = "Run stopped before completion.";
   run.report = buildRunReport(run);
 
   recordTimelineStep(run, {
