@@ -29,10 +29,11 @@ export type QwenPlannerStep = z.infer<typeof qwenPlannerStepSchema>;
 export type QwenPlannerResponse = z.infer<typeof qwenPlannerResponseSchema>;
 
 export type QwenConfigStatus = {
+  hasApiKey: boolean;
+  hasBaseUrl: boolean;
+  hasModel: boolean;
   configured: boolean;
-  apiKeyConfigured: boolean;
-  baseUrlConfigured: boolean;
-  modelConfigured: boolean;
+  modelName?: string;
 };
 
 export type QwenPlannerCallInput = {

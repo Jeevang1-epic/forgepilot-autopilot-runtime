@@ -114,6 +114,7 @@ export function createRunRecord(input: CreateRunInput): ForgePilotRun {
     plannerModeRequested: input.plannerMode ?? "auto",
     plannerModeUsed: "local",
     qwenConfigured: false,
+    qwenJsonRepairUsed: false,
     plannerWarnings: [],
   };
 }

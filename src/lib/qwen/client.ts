@@ -47,15 +47,18 @@ function buildChatCompletionsUrl(baseUrl: string) {
 }
 
 export function getQwenConfigStatus(): QwenConfigStatus {
-  const apiKeyConfigured = getEnvValue("QWEN_API_KEY").length > 0;
-  const baseUrlConfigured = getEnvValue("QWEN_BASE_URL").length > 0;
-  const modelConfigured = getEnvValue("QWEN_MODEL").length > 0;
+  const model = getEnvValue("QWEN_MODEL");
+  const hasApiKey = getEnvValue("QWEN_API_KEY").length > 0;
+  const hasBaseUrl = getEnvValue("QWEN_BASE_URL").length > 0;
+  const hasModel = model.length > 0;
+  const configured = hasApiKey && hasBaseUrl && hasModel;
 
   return {
-    configured: apiKeyConfigured && baseUrlConfigured && modelConfigured,
-    apiKeyConfigured,
-    baseUrlConfigured,
-    modelConfigured,
+    hasApiKey,
+    hasBaseUrl,
+    hasModel,
+    configured,
+    modelName: configured ? model : undefined,
   };
 }
 

@@ -4,7 +4,9 @@ export type RuntimeErrorCode =
   | "APPROVAL_NOT_FOUND"
   | "RUN_NOT_APPROVABLE"
   | "TOOL_EXECUTION_FAILED"
-  | "QWEN_NOT_CONFIGURED";
+  | "QWEN_NOT_CONFIGURED"
+  | "QWEN_PLANNER_FAILED"
+  | "QWEN_PLANNER_INVALID";
 
 export class RuntimeError extends Error {
   code: RuntimeErrorCode;

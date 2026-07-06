@@ -21,6 +21,12 @@ function stripMarkdownFence(value: string) {
     .trim();
 }
 
+function extractFencedJson(value: string) {
+  const fencedMatch = value.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+
+  return fencedMatch?.[1]?.trim();
+}
+
 function extractFirstJsonObject(value: string) {
   const start = value.indexOf("{");
 
@@ -80,14 +86,19 @@ export function normalizePlannerJson(rawContent: string): NormalizedJson {
       warnings: [],
     };
   } catch {
-    const unfenced = stripMarkdownFence(content);
+    const fenced = extractFencedJson(content);
+    const unfenced = fenced ?? stripMarkdownFence(content);
 
     if (unfenced !== content) {
       try {
         return {
           value: parseJson(unfenced),
           repaired: true,
-          warnings: ["Qwen returned fenced JSON; ForgePilot removed the fence."],
+          warnings: [
+            fenced
+              ? "Qwen returned JSON inside a fenced code block; ForgePilot extracted it."
+              : "Qwen returned fenced JSON; ForgePilot removed the fence.",
+          ],
         };
       } catch {
         // Continue to object extraction below.

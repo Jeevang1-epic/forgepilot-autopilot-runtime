@@ -1,3 +1,5 @@
+import { ZodError } from "zod";
+
 import { RuntimeError } from "@/lib/runtime/errors";
 import { buildDeterministicPlan } from "@/lib/runtime/trigger-engine";
 import { getPlannerToolManifest } from "@/lib/runtime/tool-registry";
@@ -9,10 +11,7 @@ import type {
 
 import { callQwenPlanner, getQwenConfigStatus, hasQwenConfig } from "./client";
 import { normalizePlannerJson } from "./json-normalizer";
-import {
-  qwenPlannerResponseSchema,
-  type QwenPlannerResponse,
-} from "./types";
+import { qwenPlannerResponseSchema, type QwenPlannerResponse } from "./types";
 
 type PlannerResolution = {
   planSteps: PlanStep[];
@@ -22,7 +21,7 @@ type PlannerResolution = {
   qwenConfigured: boolean;
   qwenModel?: string;
   plannerWarnings: string[];
-  qwenPlan?: QwenPlannerResponse;
+  qwenJsonRepairUsed: boolean;
 };
 
 const approvalToolName = "request_human_approval";
@@ -60,6 +59,7 @@ function createLocalResolution(
     plannerModeRequested,
     plannerModeUsed,
     qwenConfigured: hasQwenConfig(),
+    qwenJsonRepairUsed: false,
     plannerWarnings,
   };
 }
@@ -72,8 +72,40 @@ function validatePlannerToolNames(plan: QwenPlannerResponse) {
     .filter((toolName) => !allowedTools.has(toolName));
 
   if (unknownTools.length > 0) {
-    throw new Error(`Qwen selected unknown tools: ${unknownTools.join(", ")}`);
+    throw new RuntimeError(
+      "QWEN_PLANNER_INVALID",
+      `Qwen selected unknown tools: ${unknownTools.join(", ")}`,
+      400,
+    );
   }
+}
+
+function toPlannerWarning(error: unknown) {
+  return error instanceof Error
+    ? `Qwen planner fallback: ${error.message}`
+    : "Qwen planner fallback: unexpected planner error.";
+}
+
+function toPlannerError(error: unknown) {
+  if (error instanceof RuntimeError) {
+    return error;
+  }
+
+  if (error instanceof ZodError) {
+    return new RuntimeError(
+      "QWEN_PLANNER_INVALID",
+      "Qwen planner returned JSON that did not match the required ForgePilot schema.",
+      400,
+    );
+  }
+
+  return new RuntimeError(
+    "QWEN_PLANNER_FAILED",
+    error instanceof Error
+      ? `Qwen planner request failed: ${error.message}`
+      : "Qwen planner request failed unexpectedly.",
+    502,
+  );
 }
 
 function convertQwenPlanToPlanSteps(plan: QwenPlannerResponse) {
@@ -198,14 +230,16 @@ export async function createPlannerResolution({
       plannerModeUsed,
       qwenConfigured: true,
       qwenModel: plannerCall.model,
+      qwenJsonRepairUsed: normalized.repaired,
       plannerWarnings: [...normalized.warnings, ...converted.warnings],
-      qwenPlan: plan,
     };
   } catch (error) {
+    if (plannerMode === "qwen") {
+      throw toPlannerError(error);
+    }
+
     return createLocalResolution(plannerMode, "local_fallback", [
-      error instanceof Error
-        ? `Qwen planner fallback: ${error.message}`
-        : "Qwen planner fallback: unexpected planner error.",
+      toPlannerWarning(error),
     ]);
   }
 }

@@ -143,6 +143,7 @@ export type ForgePilotRun = {
   plannerModeUsed: PlannerModeUsed;
   qwenModel?: string;
   qwenConfigured: boolean;
+  qwenJsonRepairUsed: boolean;
   plannerWarnings: string[];
 };
 

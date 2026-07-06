@@ -223,6 +223,7 @@ export async function executeAutopilotRun(runId: string) {
     run.plannerModeUsed = planner.plannerModeUsed;
     run.qwenConfigured = planner.qwenConfigured;
     run.qwenModel = planner.qwenModel;
+    run.qwenJsonRepairUsed = planner.qwenJsonRepairUsed;
     run.plannerWarnings = planner.plannerWarnings;
 
     recordTimelineStep(run, {
@@ -261,7 +262,10 @@ export async function executeAutopilotRun(runId: string) {
     run.status = "failed";
     run.error = error instanceof Error ? error.message : "Runtime execution failed.";
     run.completedAt = new Date().toISOString();
-    run.summary = "Run failed during local tool execution.";
+    run.summary =
+      run.timeline.length <= 1
+        ? "Run failed during planner selection."
+        : "Run failed during local tool execution.";
     run.report = buildRunReport(run);
     return saveRun(run);
   }

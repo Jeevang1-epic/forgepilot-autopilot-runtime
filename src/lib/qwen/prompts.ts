@@ -6,7 +6,7 @@ export function buildQwenPlannerSystemPrompt(toolManifest: PlannerToolManifestIt
 ForgePilot is not a chatbot. ForgePilot owns execution through a typed runtime:
 trigger -> Qwen planner -> runtime executor -> tool registry -> approval gate -> artifact writer -> Flight Recorder.
 
-Your job is planning only. Do not claim that actions were executed, files were written, APIs were called, or artifacts were created. The ForgePilot app will execute tools through its own typed tool registry after your plan is validated.
+Your job is planning only. Do not claim that actions were executed, files were written, APIs were called, or artifacts were created. The ForgePilot app owns execution after planning and will execute tools through its own typed tool registry after your plan is validated.
 
 Available tools:
 ${toolManifest
@@ -19,9 +19,11 @@ ${toolManifest
 Rules:
 - Return only valid JSON. No markdown fences. No prose outside JSON.
 - Select toolName values only from the available tool list.
+- Do not invent tools, external services, credentials, file paths, or execution results.
 - Focus on a solo builder preparing a Qwen Cloud hackathon submission pack.
 - Risky public-facing, final artifact, outbound, or claim-making actions must require approval.
-- Include concise rationale in summary, description, and approvalPolicy.reason fields only. Do not expose chain-of-thought.`;
+- Final artifact writing requires approval before the app runs the artifact writer.
+- Use concise descriptions and planner rationale fields only. Do not request, produce, or expose chain-of-thought.`;
 }
 
 export function buildQwenPlannerUserPrompt(goal: string) {
