@@ -57,7 +57,7 @@ The demo workflow pauses at `awaiting_approval` before final artifacts are gener
 
 ## Qwen Cloud Planner Setup
 
-Copy `.env.example` and provide these values when you want to test Qwen planning:
+Copy `.env.example` to `.env.local` and provide these values when you want to test Qwen planning. Never commit `.env.local` or real secrets.
 
 ```bash
 QWEN_API_KEY=
@@ -65,7 +65,7 @@ QWEN_BASE_URL=
 QWEN_MODEL=
 ```
 
-The key is never exposed to client components or health responses.
+`QWEN_BASE_URL` should point to the OpenAI-compatible Qwen/Alibaba endpoint. `QWEN_MODEL` should match a model enabled in your Qwen Cloud account. The key is never exposed to client components, health responses, run reports, or planner debug UI.
 
 Planner modes:
 
@@ -77,7 +77,8 @@ Fallback behavior:
 
 - If Qwen is not configured, `auto` records `local_fallback` and continues safely.
 - If Qwen returns fenced JSON or surrounding text, ForgePilot attempts JSON repair and records `qwen_repaired`.
-- If Qwen output is still invalid, ForgePilot falls back safely to the deterministic local planner.
+- If Qwen output is still invalid in `auto`, ForgePilot falls back safely to the deterministic local planner.
+- If Qwen output is invalid in `qwen`, ForgePilot returns a clean normalized error instead of pretending a plan worked.
 - Qwen is the planning brain only. The app executes tools through the typed local registry.
 
 Planned next Qwen work:
@@ -125,9 +126,9 @@ API responses use a consistent shape:
 - `POST /api/runs/demo` creates and executes the standard demo run until approval is required.
 - `GET /api/runs/[id]` returns a single run.
 - `POST /api/approvals` accepts `approvalId` and `decision` (`approved` or `rejected`).
-- `GET /api/runs/health` runs a local runtime self-check.
-- `GET /api/qwen/health` returns Qwen config presence without revealing secrets.
-- `POST /api/qwen/plan` tests planner output for `goal` and `plannerMode`.
+- `GET /api/runs/health` runs a local runtime self-check with safe Qwen status, planner modes, manifest count, demo health, approval health, and artifact health.
+- `GET /api/qwen/health` returns safe config booleans: `hasApiKey`, `hasBaseUrl`, `hasModel`, `configured`, and `modelName` only when configured.
+- `POST /api/qwen/plan` tests planner output for `goal` and `plannerMode` without exposing raw secrets or executable functions.
 
 ## Local Setup
 
@@ -166,7 +167,14 @@ curl http://localhost:3000/api/runs/health
 curl http://localhost:3000/api/qwen/health
 ```
 
-The health check verifies the tool registry, demo run pause, approval completion, artifact generation, and forbidden marker-file absence.
+Windows PowerShell:
+
+```powershell
+Invoke-RestMethod -Method GET -Uri http://localhost:3000/api/runs/health
+Invoke-RestMethod -Method GET -Uri http://localhost:3000/api/qwen/health
+```
+
+The health check verifies the tool registry, safe Qwen config status, planner modes, tool manifest count, demo run pause, approval completion, artifact generation, and forbidden marker-file absence.
 
 Planner route local-mode smoke test:
 
@@ -174,4 +182,44 @@ Planner route local-mode smoke test:
 curl -X POST http://localhost:3000/api/qwen/plan \
   -H "Content-Type: application/json" \
   -d "{\"goal\":\"Prepare my Qwen Cloud hackathon submission pack.\",\"plannerMode\":\"local\"}"
+```
+
+Windows PowerShell:
+
+```powershell
+Invoke-RestMethod `
+  -Method POST `
+  -Uri http://localhost:3000/api/qwen/plan `
+  -ContentType "application/json" `
+  -Body '{"goal":"Prepare my Qwen Cloud hackathon submission pack.","plannerMode":"local"}'
+```
+
+Auto fallback smoke test without an API key:
+
+```powershell
+Invoke-RestMethod `
+  -Method POST `
+  -Uri http://localhost:3000/api/qwen/plan `
+  -ContentType "application/json" `
+  -Body '{"goal":"Prepare my Qwen Cloud hackathon submission pack.","plannerMode":"auto"}'
+```
+
+Qwen mode test after configuring `.env.local`:
+
+```powershell
+Invoke-RestMethod `
+  -Method POST `
+  -Uri http://localhost:3000/api/qwen/plan `
+  -ContentType "application/json" `
+  -Body '{"goal":"Prepare my Qwen Cloud hackathon submission pack.","plannerMode":"qwen"}'
+```
+
+Demo run API smoke test:
+
+```powershell
+Invoke-RestMethod `
+  -Method POST `
+  -Uri http://localhost:3000/api/runs/demo `
+  -ContentType "application/json" `
+  -Body '{"plannerMode":"auto"}'
 ```
