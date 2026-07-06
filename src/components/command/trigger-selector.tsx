@@ -21,7 +21,7 @@ const triggerOptions: TriggerOption[] = [
     description: "Reserve an intake point for external automation events.",
   },
   {
-    value: "scheduled",
+    value: "scheduled_demo",
     label: "Scheduled Demo",
     description: "Rehearse the same workflow on a predictable cadence.",
   },

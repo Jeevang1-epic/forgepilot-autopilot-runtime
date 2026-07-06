@@ -15,7 +15,7 @@ const statusLabel: Record<RunStatus, string> = {
 const triggerLabel: Record<TriggerType, string> = {
   manual: "Manual Command",
   webhook: "Webhook Trigger",
-  scheduled: "Scheduled Demo",
+  scheduled_demo: "Scheduled Demo",
 };
 
 const statusTone: Record<RunStatus, string> = {

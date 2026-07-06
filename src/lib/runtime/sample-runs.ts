@@ -1,4 +1,93 @@
-import type { Artifact, ForgePilotRun, TimelineStep } from "./types";
+import type { Artifact, ForgePilotRun, PlanStep, TimelineStep } from "./types";
+
+const completedPlanSteps: PlanStep[] = [
+  {
+    id: "plan-trigger",
+    title: "Trigger received",
+    description: "Normalize the incoming goal and create a local runtime run record.",
+    status: "completed",
+    riskLevel: "low",
+  },
+  {
+    id: "plan-build",
+    title: "Build deterministic local plan",
+    description: "Use the built-in local planner until Qwen Cloud planning is integrated.",
+    status: "completed",
+    riskLevel: "low",
+  },
+  {
+    id: "plan-scan",
+    title: "Scan project status",
+    description: "Inspect the project state represented by this MVP runtime.",
+    status: "completed",
+    toolName: "scan_project_status",
+    riskLevel: "low",
+  },
+  {
+    id: "plan-checklist",
+    title: "Generate submission checklist",
+    description: "Produce a Qwen Cloud hackathon readiness checklist.",
+    status: "completed",
+    toolName: "generate_submission_checklist",
+    riskLevel: "low",
+  },
+  {
+    id: "plan-devpost",
+    title: "Draft Devpost description",
+    description: "Draft honest submission copy without claiming live Qwen integration.",
+    status: "completed",
+    toolName: "draft_devpost_description",
+    riskLevel: "medium",
+  },
+  {
+    id: "plan-demo-script",
+    title: "Generate demo script",
+    description: "Create a 3-minute walkthrough script for judges.",
+    status: "completed",
+    toolName: "generate_demo_script",
+    riskLevel: "low",
+  },
+  {
+    id: "plan-linkedin",
+    title: "Draft LinkedIn post",
+    description: "Create a restrained founder-style post for later review.",
+    status: "completed",
+    toolName: "draft_linkedin_post",
+    riskLevel: "medium",
+  },
+  {
+    id: "plan-architecture",
+    title: "Generate architecture summary",
+    description: "Summarize the local runtime flow and next Qwen phase.",
+    status: "completed",
+    toolName: "generate_architecture_summary",
+    riskLevel: "low",
+  },
+  {
+    id: "plan-approval",
+    title: "Request human approval",
+    description: "Pause before final artifact generation and completion.",
+    status: "completed",
+    toolName: "request_human_approval",
+    requiresApproval: true,
+    riskLevel: "medium",
+  },
+  {
+    id: "plan-write",
+    title: "Write markdown artifact pack",
+    description: "Simulate safe artifact writing by creating artifact objects in state.",
+    status: "completed",
+    toolName: "write_markdown_file",
+    riskLevel: "medium",
+  },
+  {
+    id: "plan-report",
+    title: "Complete run report",
+    description: "Seal the run report with timeline, tools, approvals, and artifacts.",
+    status: "completed",
+    riskLevel: "low",
+  },
+];
 
 export const demoTimeline: TimelineStep[] = [
   {
@@ -135,13 +224,18 @@ export const demoArtifacts: Artifact[] = [
 export const demoRun: ForgePilotRun = {
   id: "run-qwen-submission-pack",
   title: "Qwen Cloud submission pack",
+  goal: "Prepare my Qwen Cloud hackathon submission pack.",
   command: "Prepare my Qwen Cloud hackathon submission pack.",
   triggerType: "manual",
   status: "completed",
   summary:
     "Generated a submission checklist, Devpost draft, demo script, launch post, architecture summary, and run report.",
+  finalSummary:
+    "Demo run completed with local artifacts, approval record, and Flight Recorder proof.",
+  createdAt: "2026-07-06T09:00:00.000Z",
   startedAt: "2026-07-06T09:00:00.000Z",
   completedAt: "2026-07-06T09:04:35.000Z",
+  planSteps: completedPlanSteps,
   timeline: demoTimeline,
   toolCalls: [
     {
@@ -199,12 +293,16 @@ export const recentRuns: ForgePilotRun[] = [
   {
     id: "run-local-readme-refresh",
     title: "Repository readiness sweep",
+    goal: "Audit my project docs and tell me what is missing before submission.",
     command: "Audit my project docs and tell me what is missing before submission.",
     triggerType: "manual",
     status: "completed",
     summary: "Scanned local docs, generated gaps, and produced a proof checklist.",
+    finalSummary: "Documentation gaps were summarized for a local readiness pass.",
+    createdAt: "2026-07-05T16:10:00.000Z",
     startedAt: "2026-07-05T16:10:00.000Z",
     completedAt: "2026-07-05T16:13:28.000Z",
+    planSteps: [],
     timeline: [],
     toolCalls: [],
     approvalRequests: [],
@@ -213,11 +311,14 @@ export const recentRuns: ForgePilotRun[] = [
   {
     id: "run-webhook-demo",
     title: "Webhook intake rehearsal",
+    goal: "When the demo webhook fires, create a compact run report.",
     command: "When the demo webhook fires, create a compact run report.",
     triggerType: "webhook",
     status: "awaiting_approval",
     summary: "Received webhook payload, drafted actions, and paused at approval.",
+    createdAt: "2026-07-05T11:42:00.000Z",
     startedAt: "2026-07-05T11:42:00.000Z",
+    planSteps: [],
     timeline: [],
     toolCalls: [],
     approvalRequests: [],

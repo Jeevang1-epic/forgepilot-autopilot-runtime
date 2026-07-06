@@ -6,7 +6,7 @@ export type RunStatus =
   | "completed"
   | "failed";
 
-export type TriggerType = "manual" | "webhook" | "scheduled";
+export type TriggerType = "manual" | "webhook" | "scheduled_demo";
 
 export type TimelineStepStatus =
   | "pending"
@@ -23,28 +23,58 @@ export type ArtifactStatus = "drafted" | "written" | "approved";
 
 export type RiskLevel = "low" | "medium" | "high";
 
-export type ArtifactKind = "markdown" | "json" | "script" | "summary";
+export type ArtifactKind = "markdown" | "json" | "script" | "summary" | "checklist";
+
+export type PlanStepStatus = "pending" | "running" | "completed" | "awaiting_approval";
+
+export type ToolProvider = "local" | "qwen-cloud" | "runtime";
+
+export type PlanStep = {
+  id: string;
+  title: string;
+  description: string;
+  status: PlanStepStatus;
+  toolName?: string;
+  requiresApproval?: boolean;
+  riskLevel?: RiskLevel;
+};
+
+export type ToolExecutionContext = {
+  runId: string;
+  goal: string;
+  now: string;
+};
+
+export type ToolExecutionResult = {
+  summary: string;
+  data?: unknown;
+};
 
 export type ToolCall = {
   id: string;
   name: string;
-  provider: "local" | "qwen-cloud" | "runtime";
+  provider: ToolProvider;
   status: ToolCallStatus;
   riskLevel: RiskLevel;
   inputSummary: string;
+  input?: unknown;
   outputSummary?: string;
+  output?: unknown;
   startedAt: string;
   completedAt?: string;
 };
 
 export type ApprovalRequest = {
   id: string;
+  runId?: string;
   title: string;
   summary: string;
+  reason?: string;
   status: ApprovalStatus;
   riskLevel: RiskLevel;
   requestedAt: string;
   approvedAt?: string;
+  rejectedAt?: string;
   approver?: string;
 };
 
@@ -56,6 +86,9 @@ export type Artifact = {
   status: ArtifactStatus;
   path: string;
   size: string;
+  fileType?: string;
+  content?: string;
+  generatedAt?: string;
 };
 
 export type TimelineStep = {
@@ -72,14 +105,32 @@ export type TimelineStep = {
 export type ForgePilotRun = {
   id: string;
   title: string;
+  goal: string;
   command: string;
   triggerType: TriggerType;
   status: RunStatus;
   summary: string;
+  finalSummary?: string;
+  createdAt: string;
   startedAt: string;
   completedAt?: string;
+  planSteps: PlanStep[];
   timeline: TimelineStep[];
   toolCalls: ToolCall[];
   approvalRequests: ApprovalRequest[];
   artifacts: Artifact[];
+  report?: Record<string, unknown>;
+  error?: string;
+};
+
+export type CreateRunInput = {
+  goal: string;
+  triggerType: TriggerType;
+};
+
+export type ApprovalDecision = "approved" | "rejected";
+
+export type ApprovalDecisionInput = {
+  approvalId: string;
+  decision: ApprovalDecision;
 };
