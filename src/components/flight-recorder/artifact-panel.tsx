@@ -27,23 +27,32 @@ export function ArtifactPanel({ artifacts }: ArtifactPanelProps) {
       </div>
 
       <div className="mt-5 space-y-3">
-        {artifacts.map((artifact) => (
-          <div key={artifact.id} className="rounded-lg border border-white/10 bg-black/25 p-4">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="font-mono text-sm font-semibold text-white">{artifact.fileName}</p>
-                <p className="mt-2 text-xs leading-5 text-white/58">{artifact.description}</p>
-              </div>
-              <span className={cn("shrink-0 rounded-full border px-2 py-1 text-[11px]", statusTone[artifact.status])}>
-                {artifact.status}
-              </span>
-            </div>
-            <div className="mt-4 flex items-center justify-between border-t border-white/10 pt-3">
-              <span className="font-mono text-xs text-white/46">{artifact.path}</span>
-              <span className="font-mono text-xs text-white/62">{artifact.size}</span>
-            </div>
+        {artifacts.length === 0 ? (
+          <div className="rounded-lg border border-dashed border-white/15 bg-black/20 p-4">
+            <p className="text-sm font-medium text-white">Awaiting approval</p>
+            <p className="mt-2 text-xs leading-5 text-white/58">
+              Final artifacts appear after the approval gate completes.
+            </p>
           </div>
-        ))}
+        ) : (
+          artifacts.map((artifact) => (
+            <div key={artifact.id} className="rounded-lg border border-white/10 bg-black/25 p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="font-mono text-sm font-semibold text-white">{artifact.fileName}</p>
+                  <p className="mt-2 text-xs leading-5 text-white/58">{artifact.description}</p>
+                </div>
+                <span className={cn("shrink-0 rounded-full border px-2 py-1 text-[11px]", statusTone[artifact.status])}>
+                  {artifact.status}
+                </span>
+              </div>
+              <div className="mt-4 flex items-center justify-between border-t border-white/10 pt-3">
+                <span className="font-mono text-xs text-white/46">{artifact.path}</span>
+                <span className="font-mono text-xs text-white/62">{artifact.size}</span>
+              </div>
+            </div>
+          ))
+        )}
       </div>
     </aside>
   );

@@ -56,9 +56,14 @@ export function RecentRuns({ runs }: RecentRunsProps) {
             className="flex min-h-72 flex-col rounded-lg border border-white/10 bg-white/[0.045] p-5 transition hover:border-white/20 hover:bg-white/[0.065]"
           >
             <div className="flex items-start justify-between gap-3">
-              <span className={cn("rounded-full border px-2.5 py-1 text-xs", statusTone[run.status])}>
-                {statusLabel[run.status]}
-              </span>
+              <div className="flex flex-wrap gap-2">
+                <span className={cn("rounded-full border px-2.5 py-1 text-xs", statusTone[run.status])}>
+                  {statusLabel[run.status]}
+                </span>
+                <span className="rounded-full border border-white/10 bg-white/[0.045] px-2.5 py-1 text-xs text-white/56">
+                  sample run
+                </span>
+              </div>
               <span className="font-mono text-xs text-white/46">{run.id}</span>
             </div>
 

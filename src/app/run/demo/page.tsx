@@ -9,6 +9,28 @@ import type { ApprovalDecision, ForgePilotRun } from "@/lib/runtime/types";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
+type ApiResponse<TData> =
+  | {
+      ok: true;
+      data: TData;
+    }
+  | {
+      ok: false;
+      error: {
+        code: string;
+        message: string;
+      };
+    };
+
+const statusTone: Record<ForgePilotRun["status"], string> = {
+  queued: "border-white/15 bg-white/[0.06] text-white/72",
+  planning: "border-cyan-200/30 bg-cyan-200/10 text-cyan-100",
+  running: "border-teal-200/30 bg-teal-200/10 text-teal-100",
+  awaiting_approval: "border-amber-200/35 bg-amber-200/12 text-amber-100",
+  completed: "border-emerald-200/30 bg-emerald-200/10 text-emerald-100",
+  failed: "border-rose-200/30 bg-rose-200/10 text-rose-100",
+};
+
 export default function DemoRunPage() {
   const router = useRouter();
   const [run, setRun] = useState<ForgePilotRun>(demoRun);
@@ -16,6 +38,7 @@ export default function DemoRunPage() {
   const [isSubmittingApproval, setIsSubmittingApproval] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showReport, setShowReport] = useState(false);
+  const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">("idle");
   const approval = useMemo(
     () =>
       run.approvalRequests.find((item) => item.status === "requested") ??
@@ -35,23 +58,22 @@ export default function DemoRunPage() {
         const response = runId
           ? await fetch(`/api/runs/${runId}`)
           : await fetch("/api/runs/demo", { method: "POST" });
-        const payload = (await response.json()) as {
+        const payload = (await response.json()) as ApiResponse<{
           run?: ForgePilotRun;
-          error?: string;
-        };
+        }>;
 
-        if (!response.ok || !payload.run) {
-          throw new Error(payload.error ?? "Unable to load run.");
+        if (!response.ok || !payload.ok || !payload.data.run) {
+          throw new Error(payload.ok ? "Unable to load run." : payload.error.message);
         }
 
         if (!isMounted) {
           return;
         }
 
-        setRun(payload.run);
+        setRun(payload.data.run);
 
         if (!runId) {
-          router.replace(`/run/demo?runId=${payload.run.id}`);
+          router.replace(`/run/demo?runId=${payload.data.run.id}`);
         }
       } catch (loadError) {
         if (isMounted) {
@@ -80,22 +102,22 @@ export default function DemoRunPage() {
     setIsLoading(true);
     setError(null);
     setShowReport(false);
+    setCopyState("idle");
 
     try {
       const response = await fetch("/api/runs/demo", {
         method: "POST",
       });
-      const payload = (await response.json()) as {
+      const payload = (await response.json()) as ApiResponse<{
         run?: ForgePilotRun;
-        error?: string;
-      };
+      }>;
 
-      if (!response.ok || !payload.run) {
-        throw new Error(payload.error ?? "Unable to replay run.");
+      if (!response.ok || !payload.ok || !payload.data.run) {
+        throw new Error(payload.ok ? "Unable to replay run." : payload.error.message);
       }
 
-      setRun(payload.run);
-      router.replace(`/run/demo?runId=${payload.run.id}`);
+      setRun(payload.data.run);
+      router.replace(`/run/demo?runId=${payload.data.run.id}`);
     } catch (replayError) {
       setError(
         replayError instanceof Error ? replayError.message : "Unable to replay run.",
@@ -112,6 +134,7 @@ export default function DemoRunPage() {
 
     setIsSubmittingApproval(true);
     setError(null);
+    setCopyState("idle");
 
     try {
       const response = await fetch("/api/approvals", {
@@ -124,16 +147,19 @@ export default function DemoRunPage() {
           decision,
         }),
       });
-      const payload = (await response.json()) as {
+      const payload = (await response.json()) as ApiResponse<{
         run?: ForgePilotRun;
-        error?: string;
-      };
+      }>;
 
-      if (!response.ok || !payload.run) {
-        throw new Error(payload.error ?? "Unable to submit approval decision.");
+      if (!response.ok || !payload.ok || !payload.data.run) {
+        throw new Error(
+          payload.ok
+            ? "Unable to submit approval decision."
+            : payload.error.message,
+        );
       }
 
-      setRun(payload.run);
+      setRun(payload.data.run);
       setShowReport(decision === "approved");
     } catch (approvalError) {
       setError(
@@ -148,6 +174,15 @@ export default function DemoRunPage() {
 
   const runReport = JSON.stringify(run.report ?? run, null, 2);
 
+  async function copyRunReport() {
+    try {
+      await navigator.clipboard.writeText(runReport);
+      setCopyState("copied");
+    } catch {
+      setCopyState("failed");
+    }
+  }
+
   return (
     <div className="space-y-6">
       <section className="rounded-lg border border-white/10 bg-black/25 p-6 shadow-2xl shadow-black/30 sm:p-8">
@@ -160,6 +195,14 @@ export default function DemoRunPage() {
               {run.title}
             </h1>
             <p className="mt-4 max-w-3xl text-base leading-7 text-white/66">{run.summary}</p>
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              <span className="text-xs font-semibold uppercase tracking-[0.22em] text-white/46">
+                Run status
+              </span>
+              <span className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${statusTone[run.status]}`}>
+                {isLoading ? "loading" : run.status.replace("_", " ")}
+              </span>
+            </div>
             {error ? (
               <p className="mt-3 max-w-3xl rounded-lg border border-rose-200/25 bg-rose-200/10 px-3 py-2 text-sm text-rose-100">
                 {error}
@@ -193,16 +236,17 @@ export default function DemoRunPage() {
           <button
             type="button"
             onClick={() => void startFreshRun()}
-            className="inline-flex h-11 items-center justify-center rounded-lg bg-teal-200 px-4 text-sm font-semibold text-slate-950 shadow-lg shadow-teal-950/20 transition hover:bg-teal-100"
+            disabled={isLoading}
+            className="inline-flex h-11 items-center justify-center rounded-lg bg-teal-200 px-4 text-sm font-semibold text-slate-950 shadow-lg shadow-teal-950/20 transition hover:bg-teal-100 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            Run Replay
+            {isLoading ? "Starting..." : "Start Fresh Demo Run"}
           </button>
           <button
             type="button"
             onClick={() => setShowReport((current) => !current)}
             className="inline-flex h-11 items-center justify-center rounded-lg border border-white/12 bg-white/[0.055] px-4 text-sm font-semibold text-white/78 transition hover:border-white/20 hover:bg-white/[0.08]"
           >
-            Export Run Report
+            View Run Report
           </button>
         </div>
       </section>
@@ -242,16 +286,34 @@ export default function DemoRunPage() {
 
           {showReport ? (
             <section className="rounded-lg border border-white/10 bg-black/30 p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-teal-200/70">
-                Export Run Report
-              </p>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-teal-200/70">
+                    View Run Report
+                  </p>
+                  <p className="mt-2 text-sm text-white/58">
+                    Formatted JSON summary from the current runtime state.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => void copyRunReport()}
+                  className="inline-flex h-10 items-center justify-center rounded-lg border border-white/12 bg-white/[0.055] px-3 text-sm font-semibold text-white/78 transition hover:border-white/20 hover:bg-white/[0.08]"
+                >
+                  {copyState === "copied"
+                    ? "Copied"
+                    : copyState === "failed"
+                      ? "Copy failed"
+                      : "Copy Run Report"}
+                </button>
+              </div>
               <pre className="mt-4 max-h-[32rem] overflow-auto rounded-lg border border-white/10 bg-black/45 p-4 text-xs leading-5 text-white/72">
                 {runReport}
               </pre>
             </section>
           ) : null}
         </div>
-        <ArtifactPanel artifacts={run.artifacts} />
+        <ArtifactPanel artifacts={run.status === "completed" ? run.artifacts : []} />
       </div>
     </div>
   );

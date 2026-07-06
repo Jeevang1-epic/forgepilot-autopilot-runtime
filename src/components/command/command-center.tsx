@@ -9,6 +9,19 @@ import { cn } from "@/lib/utils";
 
 import { TriggerSelector } from "./trigger-selector";
 
+type ApiResponse<TData> =
+  | {
+      ok: true;
+      data: TData;
+    }
+  | {
+      ok: false;
+      error: {
+        code: string;
+        message: string;
+      };
+    };
+
 const defaultCommand = "Prepare my Qwen Cloud hackathon submission pack.";
 
 const executionPreview = [
@@ -33,16 +46,17 @@ export function CommandCenter() {
       const response = await fetch("/api/runs/demo", {
         method: "POST",
       });
-      const payload = (await response.json()) as {
+      const payload = (await response.json()) as ApiResponse<{
         run?: ForgePilotRun;
-        error?: string;
-      };
+      }>;
 
-      if (!response.ok || !payload.run) {
-        throw new Error(payload.error ?? "Unable to start demo run.");
+      if (!response.ok || !payload.ok || !payload.data.run) {
+        throw new Error(
+          payload.ok ? "Unable to start demo run." : payload.error.message,
+        );
       }
 
-      router.push(`/run/demo?runId=${payload.run.id}`);
+      router.push(`/run/demo?runId=${payload.data.run.id}`);
     } catch (startError) {
       setError(
         startError instanceof Error

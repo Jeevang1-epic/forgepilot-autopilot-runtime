@@ -67,24 +67,26 @@ export function ApprovalPreview({
         </div>
       </div>
 
-      <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-        <button
-          type="button"
-          onClick={onApprove}
-          disabled={!isRequested || isSubmitting}
-          className="inline-flex h-11 items-center justify-center rounded-lg bg-emerald-200 px-4 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-950/20 transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-55"
-        >
-          {isSubmitting ? "Submitting..." : "Approve artifact write"}
-        </button>
-        <button
-          type="button"
-          onClick={onReject}
-          disabled={!isRequested || isSubmitting}
-          className="inline-flex h-11 items-center justify-center rounded-lg border border-rose-200/25 bg-rose-200/10 px-4 text-sm font-semibold text-rose-100 transition hover:bg-rose-200/15 disabled:cursor-not-allowed disabled:opacity-55"
-        >
-          Reject and revise plan
-        </button>
-      </div>
+      {isRequested ? (
+        <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+          <button
+            type="button"
+            onClick={onApprove}
+            disabled={isSubmitting}
+            className="inline-flex h-11 items-center justify-center rounded-lg bg-emerald-200 px-4 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-950/20 transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-55"
+          >
+            {isSubmitting ? "Submitting..." : "Approve Final Artifact Pack"}
+          </button>
+          <button
+            type="button"
+            onClick={onReject}
+            disabled={isSubmitting}
+            className="inline-flex h-11 items-center justify-center rounded-lg border border-rose-200/25 bg-rose-200/10 px-4 text-sm font-semibold text-rose-100 transition hover:bg-rose-200/15 disabled:cursor-not-allowed disabled:opacity-55"
+          >
+            Reject
+          </button>
+        </div>
+      ) : null}
     </section>
   );
 }
