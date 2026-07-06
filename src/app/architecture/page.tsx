@@ -69,6 +69,7 @@ const proofChecklist = [
   "Typed tool calling implemented locally",
   "Human approval gate implemented locally",
   "Generated runtime artifacts implemented",
+  "Runtime API routes implemented",
   "Webhook trigger planned",
   "Alibaba Cloud proof path planned",
 ];
@@ -81,6 +82,8 @@ const buildStatus = [
       "Local runtime executor with Flight Recorder proof",
       "Typed run, tool, approval, and artifact data model",
       "Zod-validated local tool registry",
+      "Normalized local API routes",
+      "Runtime health check endpoint",
       "Judge-facing architecture proof page",
     ],
   },
@@ -88,9 +91,12 @@ const buildStatus = [
     label: "Planned next",
     items: [
       "Live Qwen Cloud planner request and response validation",
+      "Qwen tool-call selection",
+      "JSON repair and validation loop",
       "Persistent artifact storage beyond the in-memory MVP store",
       "Authenticated approval decisions for shared deployments",
       "Webhook bridge for external trigger intake",
+      "Alibaba Cloud proof path",
     ],
   },
 ];
