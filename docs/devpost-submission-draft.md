@@ -1,70 +1,110 @@
-# ForgePilot Devpost Submission Draft
+# ForgePilot - Jeevan Autopilot Runtime
 
-## Project Name
+## Tagline
 
-ForgePilot - Jeevan Autopilot Runtime
+A local-first Qwen-powered autopilot runtime that turns one builder command or webhook trigger into a validated workflow with tool selection, human approval, generated artifacts, and a Flight Recorder proof trail.
 
-## One-Line Pitch
+## Inspiration
 
-ForgePilot turns one messy builder command into a local-first autopilot run with Qwen-ready planning, safe tool execution, human approval, generated artifacts, and a Flight Recorder timeline.
+Solo builders do not need another chat window that only suggests work. During a hackathon, the hard part is turning a messy goal into a real workflow: plan the work, call the right tools, stop before risky actions, generate useful artifacts, and preserve proof of what happened.
 
-## Track
-
-Qwen Cloud Global AI Hackathon, Track 4: Autopilot Agent.
+ForgePilot was built around that gap. The goal is an autopilot runtime for builders, where the main unit is a run, not a conversation.
 
 ## What It Does
 
-ForgePilot is not a chatbot. It is a local-first automation runtime foundation for solo builders:
+ForgePilot starts from either a manual command or a validated webhook trigger. It creates a typed run, chooses a planner mode, executes registered local tools, pauses at a human approval gate, generates artifacts after approval, and records everything in a Flight Recorder timeline.
+
+The current demo workflow prepares a Qwen Cloud hackathon submission pack. It can generate checklist content, Devpost copy, demo script content, launch-post copy, architecture summary content, and a run report.
+
+## How It Works
+
+Runtime flow:
 
 ```text
 Trigger Engine -> Qwen Planner -> Runtime Executor -> Tool Registry -> Approval Gate -> Artifact Writer -> Flight Recorder
 ```
 
-The current MVP can start a run from the Command Center, from the demo API, or from the inbound webhook route. It executes a hackathon submission-pack workflow, pauses before final artifact generation, and records every step in the Flight Recorder.
+The runtime keeps state as typed objects: runs, plan steps, tool calls, approval requests, artifacts, and reports. API responses are normalized, and the UI exposes the run as operational proof rather than a chat transcript.
 
-## Built For This Phase
+## How We Used Qwen Cloud
 
-- Premium Next.js command-center interface.
-- Flight Recorder demo with runtime metadata, tool-call cards, approval checkpoint, artifact panel, and run report.
-- Qwen planner adapter with structured output validation and local fallback.
-- Qwen tool-selection adapter that validates tool calls against the local typed registry.
-- Local runtime executor that owns all tool execution.
-- Human approval gate before final artifact writing.
-- Inbound webhook trigger route with optional shared-secret header.
-- Trigger Lab page for local webhook smoke tests.
-- Submission Proof Pack page for judges.
-- Runtime and Qwen health endpoints.
+ForgePilot includes server-side Qwen adapters for:
 
-## Qwen Cloud Plan
+- Structured planning.
+- JSON normalization and repair.
+- Tool-selection requests.
+- OpenAI-compatible tool manifest generation.
+- Local validation of Qwen-selected tools.
 
-ForgePilot has server-side Qwen adapter code for planning and tool selection. When `QWEN_API_KEY`, `QWEN_BASE_URL`, and `QWEN_MODEL` are configured, Qwen can return structured plans or select the next tool. ForgePilot still validates responses locally and executes only registered local tools.
+When `QWEN_API_KEY`, `QWEN_BASE_URL`, and `QWEN_MODEL` are configured, Qwen can provide plans or select the next tool. ForgePilot still validates the response locally and executes only registered local tools. When Qwen env vars are missing, `auto` mode falls back to the deterministic local runtime so the demo remains safe and reproducible.
 
-The project does not claim a live production Qwen deployment is already configured in this repo.
+This repo does not include real Qwen credentials and does not claim a completed production Qwen deployment.
 
-## Safety Model
+## Track Fit: Autopilot Agent
 
-- Qwen does not execute tools directly.
-- Only registered local tools can run.
-- Tool names and arguments are validated with Zod.
-- Unknown or unsafe tool selections are blocked.
-- Final artifact writing is blocked before approval.
-- Missing Qwen env vars fall back safely in `auto` mode.
+ForgePilot fits Track 4 because it demonstrates an automation runtime loop:
 
-## Demo Flow
+- Manual or webhook trigger.
+- Planner/tool selector.
+- App-owned tool execution.
+- Human approval checkpoint.
+- Artifact generation.
+- Flight Recorder proof.
 
-1. Open the Command Center.
-2. Start an autopilot run.
-3. Inspect Runtime Brain metadata and tool-call proof.
-4. Confirm the run pauses at approval before artifacts exist.
-5. Approve the final artifact pack.
-6. Inspect generated artifacts and run report.
-7. Open Trigger Lab and send a test webhook.
-8. Open Submission Proof Pack for the judge-facing summary.
+It is not positioned as a generic chatbot or a static dashboard.
 
-## Planned Next
+## Technical Architecture
 
-- Optional live n8n workflow connected to the webhook route.
+- Next.js App Router frontend and API routes.
+- TypeScript runtime model.
+- Zod-validated request bodies and tool inputs.
+- In-memory MVP run store.
+- Local typed tool registry.
+- Approval gate before artifact writing.
+- Qwen planner and tool-selection adapters.
+- Webhook trigger route with optional shared-secret header.
+- Health endpoints for runtime and Qwen configuration proof.
+
+## Human-In-The-Loop Safety
+
+ForgePilot blocks final artifact writing until a human approves the checkpoint. Qwen never executes tools directly. Unknown tool names, invalid tool arguments, unsupported tool-call types, and unsafe artifact-writing attempts are blocked or routed to safe local fallback behavior.
+
+## Challenges
+
+- Designing the project as a runtime rather than a chat UI.
+- Making Qwen integration useful while keeping execution owned by the app.
+- Keeping the demo honest without fake keys, fake deployment claims, or simulated external actions.
+- Showing enough proof for judges while keeping the MVP local-first and understandable.
+
+## Accomplishments
+
+- Built a premium mission-control UI for autopilot runs.
+- Implemented a typed local runtime engine.
+- Added Qwen planner and tool-selection adapters.
+- Added local registry validation for Qwen-selected tools.
+- Added a Flight Recorder with timeline, tool-call, approval, artifact, and report proof.
+- Added Trigger Lab and a validated webhook route.
+- Added Proof Pack and architecture pages for judges.
+- Kept fallback behavior safe when Qwen env vars are missing.
+
+## What We Learned
+
+The most important design decision was separating intelligence from authority. Qwen can plan or select, but ForgePilot owns validation, execution, approval, artifact generation, and reporting. That makes the system easier to explain, safer to demo, and closer to a real autopilot runtime.
+
+## What Is Next
+
+- Credentialed Qwen Cloud testing with the final account.
+- Optional n8n workflow connected to the webhook route.
 - Alibaba Function Compute proof path.
-- Durable artifact export/download.
-- Persistent run storage.
-- Real external connectors after stronger auth and approval boundaries.
+- Durable artifact export and storage.
+- Persistent run history.
+- Real external connectors only after stronger authentication, approval, and audit controls.
+
+## Built With
+
+- Next.js
+- TypeScript
+- Tailwind CSS
+- Zod
+- Qwen Cloud OpenAI-compatible API adapter
+- Local-first runtime architecture
