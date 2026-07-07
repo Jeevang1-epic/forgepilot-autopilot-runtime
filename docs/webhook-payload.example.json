@@ -1,0 +1,11 @@
+{
+  "goal": "Prepare my Qwen Cloud hackathon submission pack.",
+  "source": "manual_test",
+  "plannerMode": "auto",
+  "executionMode": "auto",
+  "metadata": {
+    "triggerName": "Trigger Lab",
+    "requestId": "local-test-001",
+    "notes": "Manual webhook smoke test from the ForgePilot Trigger Lab."
+  }
+}

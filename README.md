@@ -4,7 +4,7 @@ ForgePilot is a local-first autopilot runtime foundation that turns one messy co
 
 ## Current Version
 
-This repo is currently in foundation/demo state with a local runtime MVP plus Qwen Cloud planner and tool-selection adapters. It includes the premium application shell, command center, Flight Recorder page, architecture proof page, typed local runtime engine, Zod-validated tool registry, approval gate, in-memory run store, generated artifact objects, normalized API routes, README, and `.env.example`.
+This repo is currently in foundation/demo state with a local runtime MVP plus Qwen Cloud planner and tool-selection adapters. It includes the premium application shell, command center, Flight Recorder page, Trigger Lab, architecture proof page, Submission Proof Pack, typed local runtime engine, Zod-validated tool registry, approval gate, inbound webhook route, in-memory run store, generated artifact objects, normalized API routes, README, and `.env.example`.
 
 Qwen Cloud can be used as the planning brain and next-tool selector when `QWEN_API_KEY`, `QWEN_BASE_URL`, and `QWEN_MODEL` are configured. Tool execution is still owned by ForgePilot through the local typed tool registry. Qwen never executes tools directly.
 
@@ -23,7 +23,9 @@ ForgePilot is not a generic chatbot. The command input is only the trigger surfa
 - Premium Next.js App Router interface with a dark mission-control shell.
 - Home Command Center with command intake, trigger selector, recent runs, and runtime stats.
 - Live Flight Recorder page backed by local API state, timeline events, risk labels, tool names, approval checkpoint UI, tool-call proof cards, report export panel, and artifact panel.
+- Trigger Lab page for sending validated local webhook payloads into the runtime.
 - Architecture proof page explaining what is already built and what is planned next.
+- Submission Proof Pack page with judge-facing implemented/planned proof.
 - Strong TypeScript runtime types for runs, plan steps, timeline steps, tool calls, approvals, and artifacts.
 - Deterministic local tools for the hackathon submission-pack workflow.
 
@@ -32,6 +34,7 @@ ForgePilot is not a generic chatbot. The command input is only the trigger surfa
 The runtime engine remains local-first. Qwen can now control planning or select the next tool when configured, but ForgePilot still validates every plan and tool call before executing registered local tools itself.
 
 - `trigger-engine.ts` creates a run and initial local plan state.
+- `webhook-config.ts` keeps optional inbound webhook secret checks server-side.
 - `src/lib/qwen/*` handles Qwen planner/tool-calling configuration, prompts, response validation, JSON repair, local fallback, and the OpenAI-compatible tool manifest.
 - `tool-registry.ts` registers tools with name, description, input schema, risk level, approval requirement, and execute function.
 - `tool-registry.ts` also exposes planner-safe metadata without exposing executable functions.
@@ -46,7 +49,7 @@ The demo workflow pauses at `awaiting_approval` before final artifacts are gener
 
 ## Runtime Lifecycle
 
-1. Trigger Engine creates a run from a goal and trigger type.
+1. Trigger Engine creates a run from a goal and trigger type, including manual commands or webhook payloads.
 2. The selected planner mode creates plan steps: `local`, `qwen`, or `auto`.
 3. The selected execution mode runs local tools directly, uses Qwen planning only, or asks Qwen to select the next tool.
 4. Runtime Executor validates every selected tool against the local typed registry.
@@ -69,6 +72,71 @@ The demo workflow pauses at `awaiting_approval` before final artifacts are gener
 
 This path works without a Qwen API key. Missing env vars do not break the demo because `auto` mode falls back to local runtime execution.
 
+## Webhook Trigger Bridge
+
+`POST /api/webhooks/forgepilot` accepts safe JSON trigger payloads from the Trigger Lab, n8n, or another external caller:
+
+```json
+{
+  "goal": "Prepare my Qwen Cloud hackathon submission pack.",
+  "source": "manual_test",
+  "plannerMode": "auto",
+  "executionMode": "auto",
+  "metadata": {
+    "triggerName": "Trigger Lab",
+    "requestId": "local-test-001",
+    "notes": "Manual webhook smoke test."
+  }
+}
+```
+
+The route validates the payload with Zod, creates a run with `triggerType: "webhook"`, executes only registered local tools, pauses before final artifact writing, and returns normalized run metadata:
+
+```json
+{
+  "ok": true,
+  "data": {
+    "runId": "run-...",
+    "status": "awaiting_approval",
+    "triggerType": "webhook",
+    "plannerModeUsed": "local_fallback",
+    "executionModeUsed": "local_fallback",
+    "approvalRequired": true,
+    "artifactsCount": 0,
+    "runUrl": "/run/demo?runId=run-..."
+  }
+}
+```
+
+Missing `goal` or unknown modes return a clean `400`. If `FORGEPILOT_WEBHOOK_SECRET` is set, callers must include `x-forgepilot-secret`; missing or wrong values return a clean `401`. If the secret is not set, local demo calls are allowed, and `/api/runs/health` reports that production should configure the secret.
+
+PowerShell webhook smoke test:
+
+```powershell
+Invoke-RestMethod `
+  -Method POST `
+  -Uri http://localhost:3000/api/webhooks/forgepilot `
+  -ContentType "application/json" `
+  -Body '{"goal":"Prepare my Qwen Cloud hackathon submission pack.","source":"manual_test","plannerMode":"auto","executionMode":"auto","metadata":{"triggerName":"Trigger Lab","requestId":"local-test-001","notes":"Manual webhook smoke test."}}'
+```
+
+cURL webhook smoke test:
+
+```bash
+curl -X POST http://localhost:3000/api/webhooks/forgepilot \
+  -H "Content-Type: application/json" \
+  -d "{\"goal\":\"Prepare my Qwen Cloud hackathon submission pack.\",\"source\":\"manual_test\",\"plannerMode\":\"auto\",\"executionMode\":\"auto\",\"metadata\":{\"triggerName\":\"Trigger Lab\",\"requestId\":\"local-test-001\",\"notes\":\"Manual webhook smoke test.\"}}"
+```
+
+Optional n8n bridge path:
+
+1. Add an n8n Webhook trigger.
+2. Add an HTTP Request node that POSTs the JSON payload to `/api/webhooks/forgepilot`.
+3. Add `x-forgepilot-secret` only when `FORGEPILOT_WEBHOOK_SECRET` is configured.
+4. Store `data.runId` and open `data.runUrl` to inspect the Flight Recorder proof.
+
+This repo does not claim that a live hosted n8n workflow is already deployed.
+
 ## Qwen Cloud Runtime Setup
 
 Copy `.env.example` to `.env.local` and provide these values when you want to test Qwen planning. Never commit `.env.local` or real secrets.
@@ -77,6 +145,7 @@ Copy `.env.example` to `.env.local` and provide these values when you want to te
 QWEN_API_KEY=
 QWEN_BASE_URL=
 QWEN_MODEL=
+FORGEPILOT_WEBHOOK_SECRET=
 ```
 
 `QWEN_BASE_URL` should point to the OpenAI-compatible Qwen/Alibaba endpoint. `QWEN_MODEL` should match a model enabled in your Qwen Cloud account. The key is never exposed to client components, health responses, run reports, or planner debug UI.
@@ -128,7 +197,7 @@ Planned next Qwen work:
 - Runs are stored in memory and reset when the server process restarts.
 - Artifact writing currently creates runtime artifact objects, not durable files on disk.
 - Approval is local-demo approval, not authenticated multi-user approval.
-- No webhook/n8n bridge is implemented yet.
+- The webhook route and Trigger Lab are implemented; a live hosted n8n workflow template remains planned.
 - No Alibaba Cloud deployment proof is implemented yet.
 - No real Gmail, LinkedIn, GitHub, email, posting, deployment, or outbound external automation is implemented.
 
@@ -171,7 +240,8 @@ API responses use a consistent shape:
 - `POST /api/runs/demo` creates and executes the standard demo run until approval is required.
 - `GET /api/runs/[id]` returns a single run.
 - `POST /api/approvals` accepts `approvalId` and `decision` (`approved` or `rejected`).
-- `GET /api/runs/health` runs a local runtime self-check with safe Qwen status, planner modes, manifest count, demo health, approval health, and artifact health.
+- `POST /api/webhooks/forgepilot` accepts a validated inbound trigger payload and creates a webhook-triggered run that pauses at approval.
+- `GET /api/runs/health` runs a local runtime self-check with safe Qwen status, webhook status, planner modes, execution modes, manifest count, demo health, approval health, and artifact health.
 - `GET /api/qwen/health` returns safe config booleans: `hasApiKey`, `hasBaseUrl`, `hasModel`, `configured`, and `modelName` only when configured.
 - `POST /api/qwen/plan` tests planner output for `goal` and `plannerMode` without exposing raw secrets or executable functions.
 - `POST /api/qwen/tool-call` tests Qwen tool selection and local registry validation without executing the selected tool.
@@ -186,7 +256,7 @@ npm run build
 npm audit --audit-level=moderate
 ```
 
-Open `http://localhost:3000` to view the Command Center.
+Open `http://localhost:3000` to view the Command Center. Use `http://localhost:3000/triggers` for Trigger Lab and `http://localhost:3000/proof` for the Submission Proof Pack.
 
 Demo flow:
 
@@ -220,7 +290,7 @@ Invoke-RestMethod -Method GET -Uri http://localhost:3000/api/runs/health
 Invoke-RestMethod -Method GET -Uri http://localhost:3000/api/qwen/health
 ```
 
-The health check verifies the tool registry, safe Qwen config status, planner modes, execution modes, tool manifest counts, demo run pause, approval blocking, approval completion, duplicate approval idempotence, rejected approval safety, auto fallback, qwen_tools missing-env behavior, artifact generation, and forbidden marker-file absence.
+The health check verifies the tool registry, safe Qwen config status, webhook status, planner modes, execution modes, tool manifest counts, demo run pause, approval blocking, approval completion, duplicate approval idempotence, rejected approval safety, auto fallback, qwen_tools missing-env behavior, artifact generation, and forbidden marker-file absence.
 
 Planner route local-mode smoke test:
 
