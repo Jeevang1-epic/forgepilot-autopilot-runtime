@@ -8,13 +8,13 @@ const completedPlanSteps: PlanStep[] = [
     status: "completed",
     riskLevel: "low",
   },
-    {
-      id: "plan-build",
-      title: "Build deterministic local plan",
-      description: "Use the built-in local planner when Qwen Cloud is not configured.",
-      status: "completed",
-      riskLevel: "low",
-    },
+  {
+    id: "plan-build",
+    title: "Build deterministic local plan",
+    description: "Use the built-in local planner when Qwen Cloud is not configured.",
+    status: "completed",
+    riskLevel: "low",
+  },
   {
     id: "plan-scan",
     title: "Scan project status",
@@ -242,6 +242,13 @@ export const demoRun: ForgePilotRun = {
   plannerWarnings: [
     "Qwen Cloud env vars are not configured, so auto mode used the local deterministic planner.",
   ],
+  executionModeRequested: "auto",
+  executionModeUsed: "local_fallback",
+  qwenToolCallingUsed: false,
+  qwenToolCallWarnings: [
+    "Qwen tool calling is not configured, so auto mode used local runtime execution.",
+  ],
+  blockedUnsafeToolCalls: [],
   planSteps: completedPlanSteps,
   timeline: demoTimeline,
   toolCalls: [
@@ -255,6 +262,9 @@ export const demoRun: ForgePilotRun = {
       outputSummary: "Nine-step plan with scan, draft, approval, write, and report phases.",
       startedAt: "2026-07-06T09:00:08.000Z",
       completedAt: "2026-07-06T09:00:16.000Z",
+      selectedBy: "runtime",
+      validationStatus: "passed",
+      executionOwner: "forgepilot-runtime",
     },
     {
       id: "tool-scan",
@@ -266,6 +276,9 @@ export const demoRun: ForgePilotRun = {
       outputSummary: "Route list, package metadata, and documentation targets collected.",
       startedAt: "2026-07-06T09:00:39.000Z",
       completedAt: "2026-07-06T09:00:58.000Z",
+      selectedBy: "runtime",
+      validationStatus: "passed",
+      executionOwner: "forgepilot-runtime",
     },
     {
       id: "tool-artifacts",
@@ -277,6 +290,9 @@ export const demoRun: ForgePilotRun = {
       outputSummary: "Five artifact records written and indexed by Flight Recorder.",
       startedAt: "2026-07-06T09:03:58.000Z",
       completedAt: "2026-07-06T09:04:12.000Z",
+      selectedBy: "runtime",
+      validationStatus: "passed",
+      executionOwner: "forgepilot-runtime",
     },
   ],
   approvalRequests: [
@@ -314,6 +330,11 @@ export const recentRuns: ForgePilotRun[] = [
     qwenConfigured: false,
     qwenJsonRepairUsed: false,
     plannerWarnings: [],
+    executionModeRequested: "local",
+    executionModeUsed: "local",
+    qwenToolCallingUsed: false,
+    qwenToolCallWarnings: [],
+    blockedUnsafeToolCalls: [],
     planSteps: [],
     timeline: [],
     toolCalls: [],
@@ -337,6 +358,13 @@ export const recentRuns: ForgePilotRun[] = [
     plannerWarnings: [
       "Webhook rehearsal used local fallback because Qwen Cloud credentials were not configured.",
     ],
+    executionModeRequested: "auto",
+    executionModeUsed: "local_fallback",
+    qwenToolCallingUsed: false,
+    qwenToolCallWarnings: [
+      "Webhook rehearsal used local runtime execution because Qwen tool calling was not configured.",
+    ],
+    blockedUnsafeToolCalls: [],
     planSteps: [],
     timeline: [],
     toolCalls: [],

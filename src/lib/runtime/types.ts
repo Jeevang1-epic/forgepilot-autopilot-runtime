@@ -35,6 +35,19 @@ export type PlannerModeRequested = "local" | "qwen" | "auto";
 
 export type PlannerModeUsed = "local" | "qwen" | "qwen_repaired" | "local_fallback";
 
+export type ExecutionModeRequested = "local" | "qwen_plan" | "qwen_tools" | "auto";
+
+export type ExecutionModeUsed =
+  | "local"
+  | "qwen_plan"
+  | "qwen_tools"
+  | "qwen_tools_with_local_completion"
+  | "local_fallback";
+
+export type ToolSelectionSource = "runtime" | "qwen";
+
+export type ToolValidationStatus = "passed" | "failed" | "blocked";
+
 export type PlanStep = {
   id: string;
   title: string;
@@ -80,6 +93,9 @@ export type ToolCall = {
   output?: unknown;
   startedAt: string;
   completedAt?: string;
+  selectedBy?: ToolSelectionSource;
+  validationStatus?: ToolValidationStatus;
+  executionOwner?: "forgepilot-runtime";
 };
 
 export type ApprovalRequest = {
@@ -145,12 +161,18 @@ export type ForgePilotRun = {
   qwenConfigured: boolean;
   qwenJsonRepairUsed: boolean;
   plannerWarnings: string[];
+  executionModeRequested: ExecutionModeRequested;
+  executionModeUsed: ExecutionModeUsed;
+  qwenToolCallingUsed: boolean;
+  qwenToolCallWarnings: string[];
+  blockedUnsafeToolCalls: string[];
 };
 
 export type CreateRunInput = {
   goal: string;
   triggerType: TriggerType;
   plannerMode?: PlannerModeRequested;
+  executionMode?: ExecutionModeRequested;
 };
 
 export type ApprovalDecision = "approved" | "rejected";

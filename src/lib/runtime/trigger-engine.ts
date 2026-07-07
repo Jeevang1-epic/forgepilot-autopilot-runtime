@@ -116,5 +116,10 @@ export function createRunRecord(input: CreateRunInput): ForgePilotRun {
     qwenConfigured: false,
     qwenJsonRepairUsed: false,
     plannerWarnings: [],
+    executionModeRequested: input.executionMode ?? "auto",
+    executionModeUsed: "local",
+    qwenToolCallingUsed: false,
+    qwenToolCallWarnings: [],
+    blockedUnsafeToolCalls: [],
   };
 }
