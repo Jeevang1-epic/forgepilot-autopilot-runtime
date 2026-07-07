@@ -2,6 +2,7 @@ import { existsSync } from "node:fs";
 
 import { getQwenConfigStatus } from "@/lib/qwen/client";
 import { getOpenAICompatibleToolDefinitions } from "@/lib/qwen/tool-manifest";
+import { getWebhookConfigStatus } from "@/lib/runtime/webhook-config";
 
 import {
   approveRunAction,
@@ -49,6 +50,7 @@ function addCheck(checks: HealthCheck[], name: string, ok: boolean, detail: stri
 export async function runRuntimeSmokeTest() {
   const checks: HealthCheck[] = [];
   const qwenConfigSafeStatus = getQwenConfigStatus();
+  const webhookConfigStatus = getWebhookConfigStatus();
   const tools = listToolDefinitions();
   const toolManifest = getPlannerToolManifest();
   const qwenToolManifest = getOpenAICompatibleToolDefinitions();
@@ -235,6 +237,17 @@ export async function runRuntimeSmokeTest() {
     toolManifestCount: toolManifest.length,
     qwenToolManifestCount: qwenToolManifest.length,
     maxQwenToolSteps,
+    webhookTriggerAvailable: true,
+    webhookSecretConfigured: webhookConfigStatus.secretConfigured,
+    webhookEndpoint: webhookConfigStatus.endpoint,
+    webhookSecretHeader: webhookConfigStatus.secretHeader,
+    supportedTriggerTypes: ["manual", "webhook", "scheduled_demo"] as const,
+    supportedPlannerModes: ["local", "qwen", "auto"] as const,
+    supportedExecutionModes: ["local", "qwen_plan", "qwen_tools", "auto"] as const,
+    safetyNote: "Final artifact writing still requires approval.",
+    webhookSafetyNote: webhookConfigStatus.secretConfigured
+      ? "Webhook shared-secret protection is configured."
+      : "Webhook secret is not configured; local demo calls are allowed, but production should set FORGEPILOT_WEBHOOK_SECRET.",
     demoRunHealth,
     approvalHealth: {
       status: completedRun.status,

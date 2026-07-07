@@ -165,15 +165,23 @@ export function createAutopilotRun(input: CreateRunInput) {
   const parsedInput = createRunSchema.parse(input);
   const run = createRunRecord(parsedInput);
   const qwenConfig = getQwenConfigStatus();
+  const triggerLabel =
+    run.triggerType === "webhook" ? "Webhook trigger received" : "Trigger received";
+  const triggerName = run.triggerMetadata?.triggerName
+    ? ` (${run.triggerMetadata.triggerName})`
+    : "";
+  const triggerSource = run.triggerMetadata?.source
+    ? ` Source: ${run.triggerMetadata.source}.`
+    : "";
 
   run.qwenConfigured = qwenConfig.configured;
   run.toolManifestCount = getOpenAICompatibleToolDefinitions().length;
   run.qwenToolCallingAvailable = qwenConfig.configured && run.toolManifestCount > 0;
 
   recordTimelineStep(run, {
-    title: "Trigger received",
-    description: "Local trigger engine accepted the goal and created a run record.",
-    toolName: "trigger.engine",
+    title: triggerLabel,
+    description: `Local trigger engine accepted the goal${triggerName} and created a run record.${triggerSource}`,
+    toolName: run.triggerType === "webhook" ? "webhook.receiver" : "trigger.engine",
     riskLevel: "low",
   });
 
@@ -186,6 +194,7 @@ export function createDemoAutopilotRun(input?: Partial<CreateRunInput>) {
     triggerType: input?.triggerType ?? "manual",
     plannerMode: input?.plannerMode ?? "auto",
     executionMode: input?.executionMode ?? "auto",
+    triggerMetadata: input?.triggerMetadata,
   });
 }
 

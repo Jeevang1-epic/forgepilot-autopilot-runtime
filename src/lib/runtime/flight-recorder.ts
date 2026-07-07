@@ -42,6 +42,7 @@ export function buildRunReport(run: ForgePilotRun) {
     goal: run.goal,
     status: run.status,
     triggerType: run.triggerType,
+    triggerMetadata: run.triggerMetadata,
     createdAt: run.createdAt,
     completedAt: run.completedAt,
     plannerModeRequested: run.plannerModeRequested,

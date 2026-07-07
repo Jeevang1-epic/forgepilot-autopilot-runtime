@@ -10,6 +10,15 @@ export type RunStatus =
 
 export type TriggerType = "manual" | "webhook" | "scheduled_demo";
 
+export type WebhookTriggerSource = "manual_test" | "n8n" | "external";
+
+export type TriggerMetadata = {
+  source?: WebhookTriggerSource;
+  triggerName?: string;
+  requestId?: string;
+  notes?: string;
+};
+
 export type TimelineStepStatus =
   | "pending"
   | "running"
@@ -152,6 +161,7 @@ export type ForgePilotRun = {
   goal: string;
   command: string;
   triggerType: TriggerType;
+  triggerMetadata?: TriggerMetadata;
   status: RunStatus;
   summary: string;
   finalSummary?: string;
@@ -189,6 +199,7 @@ export type CreateRunInput = {
   triggerType: TriggerType;
   plannerMode?: PlannerModeRequested;
   executionMode?: ExecutionModeRequested;
+  triggerMetadata?: TriggerMetadata;
 };
 
 export type ApprovalDecision = "approved" | "rejected";

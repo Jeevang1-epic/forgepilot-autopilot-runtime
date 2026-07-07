@@ -2,6 +2,8 @@ import { z } from "zod";
 
 export const triggerTypeSchema = z.enum(["manual", "webhook", "scheduled_demo"]);
 
+export const webhookSourceSchema = z.enum(["manual_test", "n8n", "external"]);
+
 export const plannerModeSchema = z.enum(["local", "qwen", "auto"]);
 
 export const executionModeSchema = z.enum([
@@ -16,6 +18,14 @@ export const createRunSchema = z.object({
   triggerType: triggerTypeSchema.default("manual"),
   plannerMode: plannerModeSchema.default("auto"),
   executionMode: executionModeSchema.default("auto"),
+  triggerMetadata: z
+    .object({
+      source: webhookSourceSchema.optional(),
+      triggerName: z.string().trim().max(120).optional(),
+      requestId: z.string().trim().max(120).optional(),
+      notes: z.string().trim().max(500).optional(),
+    })
+    .optional(),
 });
 
 export const plannerRequestSchema = z.object({
@@ -40,6 +50,20 @@ export const demoRunRequestSchema = z.object({
   executionMode: executionModeSchema.default("auto"),
 });
 
+export const webhookTriggerRequestSchema = z.object({
+  goal: z.string().trim().min(8, "goal is required and must describe the intended workflow."),
+  source: webhookSourceSchema.default("manual_test"),
+  plannerMode: plannerModeSchema.default("auto"),
+  executionMode: executionModeSchema.default("auto"),
+  metadata: z
+    .object({
+      triggerName: z.string().trim().max(120).optional(),
+      requestId: z.string().trim().max(120).optional(),
+      notes: z.string().trim().max(500).optional(),
+    })
+    .default({}),
+});
+
 export const approvalDecisionSchema = z.object({
   approvalId: z.string().trim().min(1, "approvalId is required."),
   decision: z.enum(["approved", "rejected"]),
@@ -61,6 +85,9 @@ export const markdownFileInputSchema = z.object({
 export type CreateRunSchemaInput = z.infer<typeof createRunSchema>;
 export type PlannerRequestSchemaInput = z.infer<typeof plannerRequestSchema>;
 export type DemoRunRequestSchemaInput = z.infer<typeof demoRunRequestSchema>;
+export type WebhookTriggerRequestSchemaInput = z.infer<
+  typeof webhookTriggerRequestSchema
+>;
 export type QwenToolCallRequestSchemaInput = z.infer<
   typeof qwenToolCallRequestSchema
 >;

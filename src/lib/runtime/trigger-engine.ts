@@ -102,6 +102,7 @@ export function createRunRecord(input: CreateRunInput): ForgePilotRun {
     goal: input.goal,
     command: input.goal,
     triggerType: input.triggerType,
+    triggerMetadata: input.triggerMetadata,
     status: "queued",
     summary: `Run queued for ${input.plannerMode ?? "auto"} planner mode.`,
     createdAt: now,
