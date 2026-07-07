@@ -1,6 +1,7 @@
 import { createRunSchema } from "@/lib/validation/schemas";
 import { getQwenConfigStatus } from "@/lib/qwen/client";
 import { createPlannerResolution } from "@/lib/qwen/planner";
+import { callQwenForNextTool } from "@/lib/qwen/tool-calling";
 
 import {
   buildArtifactWriteInput,
@@ -25,11 +26,22 @@ import type {
   ApprovalDecisionInput,
   CreateRunInput,
   ForgePilotRun,
+  ToolSelectionSource,
   ToolCall,
+  ToolValidationStatus,
 } from "./types";
 
 const approvalToolName = "request_human_approval";
 const artifactWriterToolName = "write_markdown_file";
+const maxQwenToolSteps = 8;
+const requiredPreApprovalToolNames = [
+  "scan_project_status",
+  "generate_submission_checklist",
+  "draft_devpost_description",
+  "generate_demo_script",
+  "draft_linkedin_post",
+  "generate_architecture_summary",
+];
 
 function markPlanStep(
   run: ForgePilotRun,
@@ -51,7 +63,17 @@ function summarizeInput(input: unknown) {
   return JSON.stringify(input);
 }
 
-async function executeToolForRun(run: ForgePilotRun, toolName: string, input: unknown) {
+type ToolRunOptions = {
+  selectedBy?: ToolSelectionSource;
+  validationStatus?: ToolValidationStatus;
+};
+
+async function executeToolForRun(
+  run: ForgePilotRun,
+  toolName: string,
+  input: unknown,
+  options: ToolRunOptions = {},
+) {
   const startedAt = new Date().toISOString();
   markPlanStep(run, toolName, "running");
 
@@ -75,13 +97,22 @@ async function executeToolForRun(run: ForgePilotRun, toolName: string, input: un
       output: result.data,
       startedAt,
       completedAt,
+      selectedBy: options.selectedBy ?? "runtime",
+      validationStatus: options.validationStatus ?? "passed",
+      executionOwner: "forgepilot-runtime",
     };
 
     recordToolCall(run, toolCall);
     markPlanStep(run, toolName, "completed");
     recordTimelineStep(run, {
-      title: tool.description,
-      description: result.summary,
+      title:
+        toolCall.selectedBy === "qwen"
+          ? `Selected by Qwen: ${tool.description}`
+          : tool.description,
+      description:
+        toolCall.selectedBy === "qwen"
+          ? `Validation passed. ForgePilot executed the local tool. ${result.summary}`
+          : result.summary,
       toolName: tool.name,
       toolCallId: toolCall.id,
       riskLevel: tool.riskLevel,
@@ -102,6 +133,9 @@ async function executeToolForRun(run: ForgePilotRun, toolName: string, input: un
         error instanceof Error ? error.message : "Tool execution failed.",
       startedAt,
       completedAt: failedAt,
+      selectedBy: options.selectedBy ?? "runtime",
+      validationStatus: "failed",
+      executionOwner: "forgepilot-runtime",
     };
 
     recordToolCall(run, toolCall);
@@ -143,6 +177,7 @@ export function createDemoAutopilotRun(input?: Partial<CreateRunInput>) {
     goal: input?.goal ?? demoGoal,
     triggerType: input?.triggerType ?? "manual",
     plannerMode: input?.plannerMode ?? "auto",
+    executionMode: input?.executionMode ?? "auto",
   });
 }
 
@@ -170,6 +205,172 @@ function getPreApprovalToolNames(run: ForgePilotRun) {
   }
 
   return toolNames;
+}
+
+function getCompletedToolNames(run: ForgePilotRun) {
+  return new Set(
+    run.toolCalls
+      .filter((toolCall) => toolCall.status === "completed")
+      .map((toolCall) => toolCall.name),
+  );
+}
+
+function getMissingRequiredTools(run: ForgePilotRun) {
+  const completedTools = getCompletedToolNames(run);
+
+  return requiredPreApprovalToolNames.filter(
+    (toolName) => !completedTools.has(toolName),
+  );
+}
+
+function buildQwenToolContext(run: ForgePilotRun) {
+  return {
+    runId: run.id,
+    status: run.status,
+    plannerModeUsed: run.plannerModeUsed,
+    executionModeRequested: run.executionModeRequested,
+    completedTools: [...getCompletedToolNames(run)],
+    warnings: run.qwenToolCallWarnings,
+    lastToolOutputs: run.toolCalls.slice(-3).map((toolCall) => ({
+      name: toolCall.name,
+      status: toolCall.status,
+      outputSummary: toolCall.outputSummary,
+    })),
+  };
+}
+
+function recordUnsafeToolBlock(run: ForgePilotRun, toolName: string) {
+  const warning = `Qwen selected ${toolName} before approval; ForgePilot blocked it and requested human approval.`;
+  run.qwenToolCallWarnings.push(warning);
+  run.blockedUnsafeToolCalls.push(toolName);
+  recordTimelineStep(run, {
+    title: "Unsafe Qwen tool call blocked",
+    description: warning,
+    status: "blocked",
+    toolName,
+    riskLevel: "high",
+  });
+}
+
+function hasApprovedArtifactGate(run: ForgePilotRun) {
+  return run.approvalRequests.some((request) => request.status === "approved");
+}
+
+async function requestApprovalAndPause(
+  run: ForgePilotRun,
+  selectedBy: ToolSelectionSource = "runtime",
+) {
+  const approvalResult = await executeToolForRun(
+    run,
+    approvalToolName,
+    {},
+    {
+      selectedBy,
+      validationStatus: "passed",
+    },
+  );
+  const approval = parseApprovalRequest(approvalResult.data);
+  run.approvalRequests.push(approval);
+  run.status = "awaiting_approval";
+  run.summary = "Runtime paused at the approval gate before final artifact generation.";
+  markPlanStep(run, approvalToolName, "awaiting_approval");
+  recordTimelineStep(run, {
+    title: "Human approval requested",
+    description: approval.reason ?? approval.summary,
+    status: "approval_required",
+    toolName: "approval.gate",
+    riskLevel: approval.riskLevel,
+  });
+
+  return saveRun(run);
+}
+
+async function completeMissingRequiredToolsLocally(run: ForgePilotRun) {
+  const missingTools = getMissingRequiredTools(run);
+
+  if (missingTools.length > 0 && run.qwenToolCallingUsed) {
+    run.executionModeUsed = "qwen_tools_with_local_completion";
+    run.qwenToolCallWarnings.push(
+      `ForgePilot completed missing required tools locally: ${missingTools.join(", ")}.`,
+    );
+  }
+
+  for (const toolName of missingTools) {
+    await executeToolForRun(run, toolName, {});
+  }
+}
+
+async function executeQwenGuidedPreApprovalTools(run: ForgePilotRun) {
+  for (let step = 0; step < maxQwenToolSteps; step += 1) {
+    const qwenResult = await callQwenForNextTool({
+      goal: run.goal,
+      context: buildQwenToolContext(run),
+      completedTools: [...getCompletedToolNames(run)],
+      requiredTools: [...requiredPreApprovalToolNames, approvalToolName],
+      executionMode: run.executionModeRequested,
+    });
+
+    run.qwenConfigured = qwenResult.qwenConfigured;
+    run.qwenModel = qwenResult.qwenModel ?? run.qwenModel;
+    run.qwenToolCallWarnings.push(...qwenResult.warnings);
+
+    if (!qwenResult.ok || !qwenResult.selectedToolCall) {
+      break;
+    }
+
+    run.qwenToolCallingUsed = true;
+    const selectedTool = qwenResult.selectedToolCall;
+
+    recordTimelineStep(run, {
+      title: "Qwen selected next tool",
+      description: `${selectedTool.name} selected. ${qwenResult.validation.reason}`,
+      toolName: selectedTool.name,
+      riskLevel: selectedTool.riskLevel,
+    });
+
+    if (selectedTool.name === artifactWriterToolName) {
+      recordUnsafeToolBlock(run, artifactWriterToolName);
+      return requestApprovalAndPause(run, "runtime");
+    }
+
+    if (selectedTool.name === approvalToolName) {
+      return requestApprovalAndPause(run, "qwen");
+    }
+
+    if (getCompletedToolNames(run).has(selectedTool.name)) {
+      run.qwenToolCallWarnings.push(
+        `Qwen selected already-completed tool ${selectedTool.name}; ForgePilot skipped the duplicate.`,
+      );
+      continue;
+    }
+
+    await executeToolForRun(run, selectedTool.name, selectedTool.parsedArguments, {
+      selectedBy: "qwen",
+      validationStatus: "passed",
+    });
+
+    if (getMissingRequiredTools(run).length === 0) {
+      break;
+    }
+  }
+
+  await completeMissingRequiredToolsLocally(run);
+
+  return undefined;
+}
+
+function resolveLocalExecutionMode(run: ForgePilotRun) {
+  if (run.executionModeRequested === "local") {
+    return "local";
+  }
+
+  if (run.executionModeRequested === "qwen_plan") {
+    return run.plannerModeUsed === "qwen" || run.plannerModeUsed === "qwen_repaired"
+      ? "qwen_plan"
+      : "local_fallback";
+  }
+
+  return "local_fallback";
 }
 
 function plannerTimelineTitle(run: ForgePilotRun) {
@@ -238,26 +439,52 @@ export async function executeAutopilotRun(runId: string) {
 
     run.status = "running";
     run.summary = "Executing typed tools from the validated planner output.";
+    const qwenConfig = getQwenConfigStatus();
+    const shouldUseQwenTools =
+      run.executionModeRequested === "qwen_tools" ||
+      (run.executionModeRequested === "auto" && qwenConfig.configured);
 
-    for (const toolName of getPreApprovalToolNames(run)) {
-      await executeToolForRun(run, toolName, {});
+    if (shouldUseQwenTools && qwenConfig.configured) {
+      run.executionModeUsed = "qwen_tools";
+
+      try {
+        const pausedRun = await executeQwenGuidedPreApprovalTools(run);
+
+        if (pausedRun) {
+          return pausedRun;
+        }
+      } catch (error) {
+        run.qwenToolCallWarnings.push(
+          error instanceof Error
+            ? `Qwen tool calling fell back to local execution: ${error.message}`
+            : "Qwen tool calling fell back to local execution.",
+        );
+        run.executionModeUsed = run.qwenToolCallingUsed
+          ? "qwen_tools_with_local_completion"
+          : "local_fallback";
+        await completeMissingRequiredToolsLocally(run);
+      }
+    } else {
+      run.executionModeUsed = resolveLocalExecutionMode(run);
+
+      if (
+        (run.executionModeRequested === "auto" ||
+          run.executionModeRequested === "qwen_tools") &&
+        !qwenConfig.configured
+      ) {
+        run.qwenToolCallWarnings.push(
+          run.executionModeRequested === "auto"
+            ? "Qwen tool calling is not configured, so auto mode used local runtime execution."
+            : "Qwen tool calling is not configured, so qwen_tools mode used local fallback execution.",
+        );
+      }
+
+      for (const toolName of getPreApprovalToolNames(run)) {
+        await executeToolForRun(run, toolName, {});
+      }
     }
 
-    const approvalResult = await executeToolForRun(run, approvalToolName, {});
-    const approval = parseApprovalRequest(approvalResult.data);
-    run.approvalRequests.push(approval);
-    run.status = "awaiting_approval";
-    run.summary = "Runtime paused at the approval gate before final artifact generation.";
-    markPlanStep(run, approvalToolName, "awaiting_approval");
-    recordTimelineStep(run, {
-      title: "Human approval requested",
-      description: approval.reason ?? approval.summary,
-      status: "approval_required",
-      toolName: "approval.gate",
-      riskLevel: approval.riskLevel,
-    });
-
-    return saveRun(run);
+    return requestApprovalAndPause(run);
   } catch (error) {
     run.status = "failed";
     run.error = error instanceof Error ? error.message : "Runtime execution failed.";
@@ -306,6 +533,14 @@ export async function continueRunAfterApproval(runId: string) {
     run.report = buildRunReport(run);
     refreshRunReportArtifact(run);
     return saveRun(run);
+  }
+
+  if (!hasApprovedArtifactGate(run)) {
+    throw new RuntimeError(
+      "RUN_NOT_APPROVABLE",
+      "Artifact writing is blocked until a human approval is granted.",
+      400,
+    );
   }
 
   run.status = "running";
