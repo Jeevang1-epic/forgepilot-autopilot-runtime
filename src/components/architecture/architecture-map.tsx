@@ -7,19 +7,19 @@ const runtimeStages = [
   },
   {
     label: "Qwen Planner",
-    description: "Calls Qwen Cloud for structured plans when configured, with safe local fallback.",
-    checkpoint: "planner adapter",
+    description: "Calls Qwen Cloud for structured plans or next-tool selection when configured.",
+    checkpoint: "planner + selector",
     state: "implemented",
   },
   {
     label: "Runtime Executor",
-    description: "Steps through the plan, dispatches tools, and records every transition.",
+    description: "Owns execution, dispatches registered tools, and records every transition.",
     checkpoint: "local executor",
     state: "implemented",
   },
   {
     label: "Tool Registry",
-    description: "Defines allowed local tools, inputs, schemas, risk, and approval flags.",
+    description: "Validates allowed tools, input schemas, risk levels, and approval flags.",
     checkpoint: "scoped tools",
     state: "implemented",
   },
@@ -53,7 +53,7 @@ export function ArchitectureMap() {
           </p>
           <h2 className="mt-2 text-3xl font-semibold text-white">Trigger to proof, end to end</h2>
           <p className="mt-3 max-w-4xl font-mono text-sm leading-6 text-white/70">
-            Trigger Engine → Qwen Planner → Runtime Executor → Tool Registry → Approval Gate → Artifact Writer → Flight Recorder
+            Trigger Engine -&gt; Qwen Planner -&gt; Runtime Executor -&gt; Tool Registry -&gt; Approval Gate -&gt; Artifact Writer -&gt; Flight Recorder
           </p>
         </div>
         <span className="w-fit rounded-full border border-white/10 bg-black/30 px-3 py-1.5 text-xs text-white/66">

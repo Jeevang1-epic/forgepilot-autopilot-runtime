@@ -4,9 +4,9 @@ ForgePilot is a local-first autopilot runtime foundation that turns one messy co
 
 ## Current Version
 
-This repo is currently in foundation/demo state with a local runtime MVP plus a Qwen Cloud planner adapter. It includes the premium application shell, command center, Flight Recorder page, architecture proof page, typed local runtime engine, Zod-validated tool registry, approval gate, in-memory run store, generated artifact objects, normalized API routes, README, and `.env.example`.
+This repo is currently in foundation/demo state with a local runtime MVP plus Qwen Cloud planner and tool-selection adapters. It includes the premium application shell, command center, Flight Recorder page, architecture proof page, typed local runtime engine, Zod-validated tool registry, approval gate, in-memory run store, generated artifact objects, normalized API routes, README, and `.env.example`.
 
-Qwen Cloud can be used as the planning brain when `QWEN_API_KEY`, `QWEN_BASE_URL`, and `QWEN_MODEL` are configured. Tool execution is still owned by ForgePilot through the local typed tool registry. Full Qwen function-call execution is planned next.
+Qwen Cloud can be used as the planning brain and next-tool selector when `QWEN_API_KEY`, `QWEN_BASE_URL`, and `QWEN_MODEL` are configured. Tool execution is still owned by ForgePilot through the local typed tool registry. Qwen never executes tools directly.
 
 ## Hackathon Track
 
@@ -29,13 +29,13 @@ ForgePilot is not a generic chatbot. The command input is only the trigger surfa
 
 ## Runtime Engine
 
-The runtime engine remains local-first. Qwen can now control planning when configured, but ForgePilot still validates the plan and executes all tools itself.
+The runtime engine remains local-first. Qwen can now control planning or select the next tool when configured, but ForgePilot still validates every plan and tool call before executing registered local tools itself.
 
 - `trigger-engine.ts` creates a run and initial local plan state.
-- `src/lib/qwen/*` handles Qwen planner configuration, prompts, response validation, JSON repair, and local fallback.
+- `src/lib/qwen/*` handles Qwen planner/tool-calling configuration, prompts, response validation, JSON repair, local fallback, and the OpenAI-compatible tool manifest.
 - `tool-registry.ts` registers tools with name, description, input schema, risk level, approval requirement, and execute function.
-- `tool-registry.ts` also exposes planner-safe metadata through `getPlannerToolManifest()` without exposing executable functions.
-- `run-engine.ts` executes the plan, records tool calls, pauses at approval, and completes the run after approval.
+- `tool-registry.ts` also exposes planner-safe metadata without exposing executable functions.
+- `run-engine.ts` executes the plan, validates Qwen-selected tools against the registry, records tool calls, pauses at approval, and completes the run after approval.
 - `approval-gate.ts` handles approve/reject decisions for the pending action.
 - `artifact-writer.ts` creates safe artifact objects in runtime state instead of relying on server filesystem writes.
 - `flight-recorder.ts` records timeline steps, tool calls, approvals, artifacts, and run reports.
@@ -48,12 +48,13 @@ The demo workflow pauses at `awaiting_approval` before final artifacts are gener
 
 1. Trigger Engine creates a run from a goal and trigger type.
 2. The selected planner mode creates plan steps: `local`, `qwen`, or `auto`.
-3. Runtime Executor dispatches Zod-validated local tools.
-4. Flight Recorder stores timeline and tool-call records.
-5. Approval Gate pauses the run at `awaiting_approval`.
-6. Approval continues exactly once into artifact generation.
-7. Artifact Writer creates runtime artifact objects.
-8. Flight Recorder seals the run report after completion.
+3. The selected execution mode runs local tools directly, uses Qwen planning only, or asks Qwen to select the next tool.
+4. Runtime Executor validates every selected tool against the local typed registry.
+5. Flight Recorder stores timeline and tool-call records.
+6. Approval Gate pauses the run at `awaiting_approval`.
+7. Approval continues exactly once into artifact generation.
+8. Artifact Writer creates runtime artifact objects.
+9. Flight Recorder seals the run report after completion.
 
 ## Qwen Cloud Planner Setup
 
@@ -73,17 +74,26 @@ Planner modes:
 - `qwen`: require Qwen Cloud config and fail cleanly if it is missing.
 - `auto`: use Qwen Cloud when all env vars exist, otherwise fall back to the local deterministic planner.
 
+Execution modes:
+
+- `local`: execute the deterministic local runtime plan.
+- `qwen_plan`: use Qwen for planning when available, then execute locally.
+- `qwen_tools`: ask Qwen to select the next tool, validate the selection locally, then execute only registered local tools.
+- `auto`: use Qwen tool selection when configured, otherwise fall back to local runtime execution.
+
 Fallback behavior:
 
 - If Qwen is not configured, `auto` records `local_fallback` and continues safely.
+- If `qwen_tools` is requested without env vars, ForgePilot records a safe local fallback instead of failing the demo path.
 - If Qwen returns fenced JSON or surrounding text, ForgePilot attempts JSON repair and records `qwen_repaired`.
 - If Qwen output is still invalid in `auto`, ForgePilot falls back safely to the deterministic local planner.
 - If Qwen output is invalid in `qwen`, ForgePilot returns a clean normalized error instead of pretending a plan worked.
-- Qwen is the planning brain only. The app executes tools through the typed local registry.
+- Qwen can plan or select tools. The app executes tools through the typed local registry.
+- `write_markdown_file` remains blocked before approval, even if Qwen selects it.
 
 Planned next Qwen work:
 
-- Qwen function-call execution loop.
+- Real credential testing against the final Qwen/Alibaba Cloud account.
 - Richer planner/tool evaluation traces.
 - Stronger artifact export and durable storage.
 
@@ -129,6 +139,7 @@ API responses use a consistent shape:
 - `GET /api/runs/health` runs a local runtime self-check with safe Qwen status, planner modes, manifest count, demo health, approval health, and artifact health.
 - `GET /api/qwen/health` returns safe config booleans: `hasApiKey`, `hasBaseUrl`, `hasModel`, `configured`, and `modelName` only when configured.
 - `POST /api/qwen/plan` tests planner output for `goal` and `plannerMode` without exposing raw secrets or executable functions.
+- `POST /api/qwen/tool-call` tests Qwen tool selection and local registry validation without executing the selected tool.
 
 ## Local Setup
 
@@ -150,14 +161,14 @@ Demo flow:
 4. Open `View Run Report` to inspect the JSON report.
 5. Use `Copy Run Report` if you want the formatted report in your clipboard.
 
-Qwen planner demo flow:
+Qwen runtime demo flow:
 
 1. Run `npm run dev`.
 2. Open `http://localhost:3000/run/demo`.
-3. Select `Auto`, `Local`, or `Qwen Cloud` planner mode.
+3. Select a planner mode and execution mode.
 4. Click `Start Fresh Demo Run`.
 5. Approve the final artifact pack.
-6. Inspect the Planner Brain card and run report.
+6. Inspect the Runtime Brain card, tool-call cards, and run report.
 
 Runtime health check:
 
@@ -174,7 +185,7 @@ Invoke-RestMethod -Method GET -Uri http://localhost:3000/api/runs/health
 Invoke-RestMethod -Method GET -Uri http://localhost:3000/api/qwen/health
 ```
 
-The health check verifies the tool registry, safe Qwen config status, planner modes, tool manifest count, demo run pause, approval completion, artifact generation, and forbidden marker-file absence.
+The health check verifies the tool registry, safe Qwen config status, planner modes, execution modes, tool manifest counts, demo run pause, approval completion, artifact generation, and forbidden marker-file absence.
 
 Planner route local-mode smoke test:
 
@@ -221,5 +232,15 @@ Invoke-RestMethod `
   -Method POST `
   -Uri http://localhost:3000/api/runs/demo `
   -ContentType "application/json" `
-  -Body '{"plannerMode":"auto"}'
+  -Body '{"plannerMode":"auto","executionMode":"auto"}'
+```
+
+Tool-call validation smoke test:
+
+```powershell
+Invoke-RestMethod `
+  -Method POST `
+  -Uri http://localhost:3000/api/qwen/tool-call `
+  -ContentType "application/json" `
+  -Body '{"goal":"Prepare my Qwen Cloud hackathon submission pack.","executionMode":"qwen_tools","context":{"completedTools":[]}}'
 ```

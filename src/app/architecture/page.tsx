@@ -14,22 +14,22 @@ const proofSections = [
   },
   {
     eyebrow: "Planner",
-    title: "Qwen Cloud planner adapter",
-    body: "The runtime now has a Qwen planner adapter that can request structured plans when env vars are configured, then validate or safely fall back before execution.",
+    title: "Qwen Cloud planner and selector adapter",
+    body: "The runtime can request structured plans or next-tool selections from Qwen when env vars are configured, then validate or safely fall back before execution.",
     points: [
-      "Qwen is used for plan generation only; ForgePilot still owns execution.",
-      "Planner responses are validated as JSON with known tools, risk labels, and approval policy.",
-      "Auto mode falls back to the deterministic local planner if Qwen is not configured or output is invalid.",
+      "Qwen can plan or select the next tool; ForgePilot still owns execution.",
+      "Planner and tool-call responses are validated against local schemas and known tool names.",
+      "Auto mode falls back to deterministic local behavior if Qwen is not configured or output is invalid.",
     ],
   },
   {
     eyebrow: "Execution",
     title: "Tool-calling runtime",
-    body: "The runtime layer dispatches local tools registered with schemas, allowed effects, risk levels, and output contracts. Full Qwen function-call execution is planned next.",
+    body: "The runtime dispatches only local registered tools with schemas, allowed effects, risk levels, and output contracts. Qwen never receives executable functions.",
     points: [
-      "Tool calls are validated before execution and recorded after completion.",
+      "Qwen tool selections are validated before the runtime executes a local tool.",
       "Local tools handle scanning, writing, checklist generation, and report assembly.",
-      "Qwen never receives executable functions, only a safe tool manifest.",
+      "Final artifact writing remains blocked until the Approval Gate is approved.",
     ],
   },
   {
@@ -65,8 +65,8 @@ const proofSections = [
 ];
 
 const proofChecklist = [
-  "Qwen Cloud planner adapter added",
-  "Qwen function-call execution loop planned",
+  "Qwen Cloud API adapter added, credentials required",
+  "Qwen tool-call selection adapter added",
   "Typed tool calling implemented locally",
   "Human approval gate implemented locally",
   "Generated runtime artifacts implemented",
@@ -86,13 +86,15 @@ const buildStatus = [
       "Normalized local API routes",
       "Runtime health check endpoint",
       "Qwen planner adapter with JSON validation and local fallback",
+      "Qwen tool-call selection route with local registry validation",
+      "Execution modes for local, Qwen plan, Qwen tools, and auto fallback",
       "Judge-facing architecture proof page",
     ],
   },
   {
     label: "Planned next",
     items: [
-      "Qwen function-call execution loop",
+      "Real Qwen credential testing against the final Alibaba Cloud account",
       "Persistent artifact storage beyond the in-memory MVP store",
       "Authenticated approval decisions for shared deployments",
       "Webhook bridge for external trigger intake",
@@ -104,8 +106,9 @@ const buildStatus = [
 const qwenAdapterFacts = [
   "Reads Qwen env vars only on the server.",
   "Sends a safe tool manifest, not executable functions.",
-  "Validates planner JSON before runtime execution.",
-  "Records planner mode, warnings, model name, and JSON repair status.",
+  "Validates planner JSON and tool-call arguments before runtime execution.",
+  "Records planner mode, execution mode, warnings, model name, and repair status.",
+  "Blocks final artifact writing before approval.",
   "Falls back locally in auto mode when config or model output is unsafe.",
 ];
 
@@ -121,9 +124,9 @@ export default function ArchitecturePage() {
         </h1>
         <p className="mt-5 max-w-3xl text-base leading-7 text-white/66">
           The local runtime now executes a real automation loop: trigger, deterministic
-          planner or Qwen planner adapter, typed tool execution, approval, artifact
-          generation, and a Flight Recorder timeline that preserves proof of what
-          happened.
+          planner or Qwen planner adapter, optional Qwen tool selection, typed local
+          tool execution, approval, artifact generation, and a Flight Recorder
+          timeline that preserves proof of what happened.
         </p>
       </section>
 
@@ -133,22 +136,22 @@ export default function ArchitecturePage() {
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-100/75">
-              Qwen Planner Adapter
+              Qwen Runtime Adapter
             </p>
             <h2 className="mt-3 text-2xl font-semibold text-white">
-              Qwen plans. ForgePilot executes.
+              Qwen plans or selects. ForgePilot validates and executes.
             </h2>
             <p className="mt-3 max-w-3xl text-sm leading-6 text-white/64">
               The adapter is intentionally narrow: it asks Qwen for structured planning
-              output, validates that output against ForgePilot schemas, and lets the
-              local runtime execute approved tools.
+              output or a next-tool selection, validates the result against ForgePilot
+              schemas, and lets the local runtime execute only registered tools.
             </p>
           </div>
           <span className="w-fit rounded-full border border-white/10 bg-black/30 px-3 py-1.5 text-xs text-white/66">
-            function-call loop planned next
+            local execution boundary enforced
           </span>
         </div>
-        <div className="mt-5 grid gap-3 md:grid-cols-5">
+        <div className="mt-5 grid gap-3 md:grid-cols-3 xl:grid-cols-6">
           {qwenAdapterFacts.map((fact) => (
             <div key={fact} className="rounded-lg border border-white/10 bg-black/25 p-3">
               <p className="text-sm leading-6 text-white/70">{fact}</p>
