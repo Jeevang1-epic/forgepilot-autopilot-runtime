@@ -9,7 +9,9 @@ import { navigationItems } from "./sidebar";
 const pageLabels: Record<string, string> = {
   "/": "Home Command Center",
   "/run/demo": "Live Flight Recorder",
+  "/triggers": "Trigger Lab",
   "/architecture": "Architecture Proof",
+  "/proof": "Submission Proof Pack",
 };
 
 export function Topbar() {

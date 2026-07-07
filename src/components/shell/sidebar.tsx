@@ -17,9 +17,19 @@ export const navigationItems = [
     description: "Replay execution proof and artifacts",
   },
   {
+    href: "/triggers",
+    label: "Trigger Lab",
+    description: "Test inbound webhook run creation",
+  },
+  {
     href: "/architecture",
     label: "Architecture Proof",
     description: "Trace the runtime plan for judges",
+  },
+  {
+    href: "/proof",
+    label: "Proof Pack",
+    description: "Review submission evidence and scope",
   },
 ];
 
