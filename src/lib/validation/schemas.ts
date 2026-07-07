@@ -27,6 +27,7 @@ export const qwenToolCallRequestSchema = z.object({
   goal: z.string().trim().min(8, "Goal must describe the intended workflow."),
   context: z.record(z.string(), z.unknown()).default({}),
   executionMode: executionModeSchema.default("qwen_tools"),
+  allowFallback: z.boolean().default(false),
 });
 
 export const demoRunRequestSchema = z.object({

@@ -1,5 +1,5 @@
 import { callQwenForNextTool } from "@/lib/qwen/tool-calling";
-import { failFromError, ok } from "@/lib/runtime/api-response";
+import { fail, failFromError, ok } from "@/lib/runtime/api-response";
 import { qwenToolCallRequestSchema } from "@/lib/validation/schemas";
 
 export const dynamic = "force-dynamic";
@@ -14,10 +14,12 @@ export async function POST(request: Request) {
         toolCall: {
           ok: false,
           qwenConfigured: false,
+          qwenToolCallingAvailable: false,
           validation: {
             passed: false,
             reason: `${input.executionMode} mode does not request Qwen tool calling.`,
           },
+          fallbackAction: "none",
           warnings: ["No Qwen tool call was requested for this execution mode."],
         },
       });
@@ -40,6 +42,18 @@ export async function POST(request: Request) {
       ],
       executionMode: input.executionMode,
     });
+
+    if (
+      input.executionMode === "qwen_tools" &&
+      !input.allowFallback &&
+      !toolCall.qwenConfigured
+    ) {
+      return fail(
+        "QWEN_NOT_CONFIGURED",
+        "Qwen tool calling requires QWEN_API_KEY, QWEN_BASE_URL, and QWEN_MODEL. Use auto mode or allowFallback for local fallback testing.",
+        400,
+      );
+    }
 
     return ok({ toolCall });
   } catch (error) {

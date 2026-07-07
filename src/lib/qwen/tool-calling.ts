@@ -52,12 +52,14 @@ export type QwenValidatedToolCall = {
 export type QwenToolCallResult = {
   ok: boolean;
   qwenConfigured: boolean;
+  qwenToolCallingAvailable: boolean;
   qwenModel?: string;
   selectedToolCall?: QwenValidatedToolCall;
   validation: {
     passed: boolean;
     reason: string;
   };
+  fallbackAction?: "none" | "local_runtime" | "clean_error";
   warnings: string[];
 };
 
@@ -74,25 +76,44 @@ function validateToolCall(toolCall: ChatToolCall | undefined): QwenToolCallResul
     return {
       ok: false,
       qwenConfigured: true,
+      qwenToolCallingAvailable: true,
       validation: {
         passed: false,
         reason: "Qwen did not return a tool call.",
       },
+      fallbackAction: "local_runtime",
       warnings: ["Qwen did not select a tool; runtime can continue with local fallback."],
     };
   }
 
-  const tool = getToolDefinition(toolCall.function.name);
+  if (toolCall.type && toolCall.type !== "function") {
+    return {
+      ok: false,
+      qwenConfigured: true,
+      qwenToolCallingAvailable: true,
+      validation: {
+        passed: false,
+        reason: `Qwen returned unsupported tool call type: ${toolCall.type}`,
+      },
+      fallbackAction: "local_runtime",
+      warnings: [`Unsupported Qwen tool call type blocked: ${toolCall.type}`],
+    };
+  }
+
+  const selectedToolName = toolCall.function.name.trim();
+  const tool = getToolDefinition(selectedToolName);
 
   if (!tool) {
     return {
       ok: false,
       qwenConfigured: true,
+      qwenToolCallingAvailable: true,
       validation: {
         passed: false,
-        reason: `Qwen selected unknown tool: ${toolCall.function.name}`,
+        reason: `Qwen selected unknown tool: ${selectedToolName}`,
       },
-      warnings: [`Unknown Qwen tool selection blocked: ${toolCall.function.name}`],
+      fallbackAction: "local_runtime",
+      warnings: [`Unknown Qwen tool selection blocked: ${selectedToolName}`],
     };
   }
 
@@ -115,12 +136,15 @@ function validateToolCall(toolCall: ChatToolCall | undefined): QwenToolCallResul
         passed: true,
         reason: "Tool call passed local registry validation.",
       },
+      qwenToolCallingAvailable: true,
+      fallbackAction: "none",
       warnings: [],
     };
   } catch (error) {
     return {
       ok: false,
       qwenConfigured: true,
+      qwenToolCallingAvailable: true,
       validation: {
         passed: false,
         reason:
@@ -128,6 +152,7 @@ function validateToolCall(toolCall: ChatToolCall | undefined): QwenToolCallResul
             ? "Qwen tool arguments did not match the local tool schema."
             : "Qwen tool arguments were not valid JSON.",
       },
+      fallbackAction: "local_runtime",
       warnings: [
         error instanceof Error
           ? `Qwen tool-call validation failed: ${error.message}`
@@ -146,10 +171,13 @@ export async function callQwenForNextTool(
     return {
       ok: false,
       qwenConfigured: false,
+      qwenToolCallingAvailable: false,
       validation: {
         passed: false,
         reason: "Qwen Cloud tool calling is not configured.",
       },
+      fallbackAction:
+        input.executionMode === "auto" ? "local_runtime" : "clean_error",
       warnings: [
         "Qwen Cloud env vars are not configured, so tool calling cannot run.",
       ],
@@ -180,7 +208,20 @@ export async function callQwenForNextTool(
     }),
   });
 
-  const payload = (await response.json()) as ChatCompletionToolResponse;
+  const responseText = await response.text();
+  let payload: ChatCompletionToolResponse = {};
+
+  try {
+    payload = responseText
+      ? (JSON.parse(responseText) as ChatCompletionToolResponse)
+      : {};
+  } catch {
+    throw new RuntimeError(
+      "QWEN_TOOL_CALL_INVALID",
+      "Qwen tool-call response was not valid JSON.",
+      502,
+    );
+  }
 
   if (!response.ok) {
     throw new RuntimeError(
@@ -197,6 +238,7 @@ export async function callQwenForNextTool(
   return {
     ...validated,
     qwenConfigured: true,
+    qwenToolCallingAvailable: true,
     qwenModel: payload.model ?? client.model,
   };
 }

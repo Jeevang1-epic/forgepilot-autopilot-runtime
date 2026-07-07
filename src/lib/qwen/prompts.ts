@@ -59,6 +59,7 @@ Rules:
 - Select only tools from the provided tool list.
 - The ForgePilot app validates your tool call and executes it through the local typed tool registry.
 - Do not claim actions are complete until the app returns tool results.
+- Do not select write_markdown_file before human approval. Select request_human_approval first.
 - Final artifact writing requires human approval before the artifact writer can run.
 - If unsure, select request_human_approval.
 - Return tool calls through the tool-calling mechanism, not prose.
