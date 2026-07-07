@@ -71,6 +71,16 @@ const executionModeTone: Record<ExecutionModeUsed, string> = {
   local_fallback: "border-amber-200/35 bg-amber-200/12 text-amber-100",
 };
 
+const demoProofChecklist = [
+  "One command starts a workflow",
+  "Qwen can select tools when configured",
+  "Local fallback protects the run",
+  "Tools are validated before execution",
+  "Human approval blocks final artifact writing",
+  "Artifacts appear only after approval",
+  "Run report captures proof",
+];
+
 export default function DemoRunPage() {
   const router = useRouter();
   const [run, setRun] = useState<ForgePilotRun>(demoRun);
@@ -429,17 +439,41 @@ export default function DemoRunPage() {
             </p>
           </div>
           <div className="rounded-lg border border-white/10 bg-black/25 p-4">
+            <p className="text-xs uppercase tracking-[0.18em] text-white/42">Qwen tools available</p>
+            <p className="mt-2 text-sm font-semibold text-white">
+              {run.qwenToolCallingAvailable ? "Yes" : "No"}
+            </p>
+          </div>
+          <div className="rounded-lg border border-white/10 bg-black/25 p-4">
             <p className="text-xs uppercase tracking-[0.18em] text-white/42">Model</p>
             <p className="mt-2 text-sm font-semibold text-white">
               {run.qwenModel ?? "Not used"}
             </p>
           </div>
-          <div className="rounded-lg border border-white/10 bg-black/25 p-4 md:col-span-2">
+          <div className="rounded-lg border border-white/10 bg-black/25 p-4">
+            <p className="text-xs uppercase tracking-[0.18em] text-white/42">Tool manifest</p>
+            <p className="mt-2 font-mono text-lg font-semibold text-white">
+              {run.toolManifestCount}
+            </p>
+          </div>
+          <div className="rounded-lg border border-white/10 bg-black/25 p-4">
             <p className="text-xs uppercase tracking-[0.18em] text-white/42">Qwen tool calling</p>
             <p className="mt-2 text-sm font-semibold text-white">
               {run.qwenToolCallingUsed
                 ? "Used for selection, executed locally"
                 : "Not used for this run"}
+            </p>
+          </div>
+          <div className="rounded-lg border border-white/10 bg-black/25 p-4">
+            <p className="text-xs uppercase tracking-[0.18em] text-white/42">Selected tools</p>
+            <p className="mt-2 font-mono text-lg font-semibold text-white">
+              {run.selectedToolsCount}
+            </p>
+          </div>
+          <div className="rounded-lg border border-white/10 bg-black/25 p-4">
+            <p className="text-xs uppercase tracking-[0.18em] text-white/42">Local completions</p>
+            <p className="mt-2 font-mono text-lg font-semibold text-white">
+              {run.locallyCompletedToolsCount}
             </p>
           </div>
           <div className="rounded-lg border border-white/10 bg-black/25 p-4">
@@ -457,19 +491,60 @@ export default function DemoRunPage() {
                 : "No fallback was needed for this run."}
             </p>
           </div>
+          <div className="rounded-lg border border-white/10 bg-black/25 p-4">
+            <p className="text-xs uppercase tracking-[0.18em] text-white/42">Loop limit hit</p>
+            <p className="mt-2 text-sm font-semibold text-white">
+              {run.maxToolLoopHit ? "Yes" : "No"}
+            </p>
+          </div>
         </div>
 
         {run.blockedUnsafeToolCalls.length > 0 ? (
-          <div className="mt-4 rounded-lg border border-amber-200/25 bg-amber-200/10 p-4">
+          <div className="mt-4 space-y-3 rounded-lg border border-amber-200/25 bg-amber-200/10 p-4">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-100/70">
               Blocked unsafe tool calls
             </p>
-            <p className="mt-2 text-sm leading-6 text-amber-100">
-              Runtime guard stopped: {run.blockedUnsafeToolCalls.join(", ")}.
-              These tool calls were selected before approval.
-            </p>
+            {run.blockedUnsafeToolCalls.map((blockedCall) => (
+              <div key={`${blockedCall.toolName}-${blockedCall.blockedAt}`} className="rounded-lg border border-amber-100/15 bg-black/20 p-3">
+                <p className="font-mono text-sm font-semibold text-amber-50">
+                  {blockedCall.toolName}
+                </p>
+                <p className="mt-2 text-sm leading-6 text-amber-100">
+                  {blockedCall.reason}
+                </p>
+                <p className="mt-2 text-xs leading-5 text-amber-100/76">
+                  Safety rule: {blockedCall.safetyRule}
+                </p>
+                <p className="mt-1 text-xs leading-5 text-amber-100/76">
+                  Fallback action: {blockedCall.fallbackAction}
+                </p>
+              </div>
+            ))}
           </div>
         ) : null}
+      </section>
+
+      <section className="rounded-lg border border-teal-200/18 bg-teal-200/[0.055] p-5">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-teal-100/75">
+              Judge Demo Checklist
+            </p>
+            <h2 className="mt-2 text-2xl font-semibold text-white">
+              What this run proves
+            </h2>
+          </div>
+          <span className="w-fit rounded-full border border-white/10 bg-black/30 px-3 py-1.5 text-xs text-white/66">
+            local-first proof
+          </span>
+        </div>
+        <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {demoProofChecklist.map((item) => (
+            <div key={item} className="rounded-lg border border-white/10 bg-black/25 p-3">
+              <p className="text-sm font-medium leading-6 text-white/72">{item}</p>
+            </div>
+          ))}
+        </div>
       </section>
 
       {approval ? (

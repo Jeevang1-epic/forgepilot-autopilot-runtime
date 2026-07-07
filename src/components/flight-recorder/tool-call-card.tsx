@@ -14,6 +14,12 @@ const riskTone: Record<RiskLevel, string> = {
   high: "border-amber-200/30 bg-amber-200/10 text-amber-100",
 };
 
+const selectedByLabel: Record<NonNullable<ToolCall["selectedBy"]>, string> = {
+  runtime: "Local Planner",
+  qwen: "Qwen Tool Selector",
+  local_completion: "Local Completion",
+};
+
 type ToolCallCardProps = {
   toolCall: ToolCall;
 };
@@ -31,7 +37,7 @@ export function ToolCallCard({ toolCall }: ToolCallCardProps) {
         <div className="flex flex-wrap gap-2">
           {toolCall.selectedBy ? (
             <span className="rounded-full border border-cyan-200/25 bg-cyan-200/10 px-2.5 py-1 text-xs capitalize text-cyan-100">
-              selected by {toolCall.selectedBy}
+              selected by {selectedByLabel[toolCall.selectedBy]}
             </span>
           ) : null}
           <span className={cn("rounded-full border px-2.5 py-1 text-xs capitalize", statusTone[toolCall.status])}>
@@ -59,15 +65,16 @@ export function ToolCallCard({ toolCall }: ToolCallCardProps) {
       <div className="mt-3 grid gap-2 sm:grid-cols-3">
         <div className="rounded-lg border border-white/10 bg-black/25 px-3 py-2">
           <p className="text-[11px] uppercase tracking-[0.16em] text-white/40">
-            Validation
+            Validated by
           </p>
-          <p className="mt-1 text-xs font-semibold capitalize text-white/70">
-            {toolCall.validationStatus ?? "recorded"}
+          <p className="mt-1 text-xs font-semibold text-white/70">
+            ForgePilot Registry
+            {toolCall.validationStatus ? ` (${toolCall.validationStatus})` : ""}
           </p>
         </div>
         <div className="rounded-lg border border-white/10 bg-black/25 px-3 py-2">
           <p className="text-[11px] uppercase tracking-[0.16em] text-white/40">
-            Executor
+            Executed by
           </p>
           <p className="mt-1 text-xs font-semibold text-white/70">
             {toolCall.executionOwner === "forgepilot-runtime"
@@ -81,6 +88,14 @@ export function ToolCallCard({ toolCall }: ToolCallCardProps) {
           </p>
           <p className="mt-1 text-xs font-semibold capitalize text-white/70">
             {toolCall.provider}
+          </p>
+        </div>
+        <div className="rounded-lg border border-white/10 bg-black/25 px-3 py-2 sm:col-span-3">
+          <p className="text-[11px] uppercase tracking-[0.16em] text-white/40">
+            Approval required
+          </p>
+          <p className="mt-1 text-xs font-semibold text-white/70">
+            {toolCall.requiresApproval ? "Yes" : "No"}
           </p>
         </div>
       </div>
