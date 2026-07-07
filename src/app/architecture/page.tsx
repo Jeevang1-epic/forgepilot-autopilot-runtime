@@ -65,14 +65,14 @@ const proofSections = [
 ];
 
 const proofChecklist = [
-  "Qwen Cloud API adapter added, credentials required",
-  "Qwen tool-call selection adapter added",
-  "Typed tool calling implemented locally",
-  "Human approval gate implemented locally",
-  "Generated runtime artifacts implemented",
-  "Runtime API routes implemented",
-  "Webhook trigger planned",
-  "Alibaba Cloud proof path planned",
+  "One command starts a workflow",
+  "Qwen can select tools when configured",
+  "Local fallback protects the run",
+  "Tools are validated before execution",
+  "Human approval blocks final artifact writing",
+  "Artifacts appear only after approval",
+  "Run report captures proof",
+  "External automation remains planned",
 ];
 
 const buildStatus = [
@@ -87,6 +87,10 @@ const buildStatus = [
       "Runtime health check endpoint",
       "Qwen planner adapter with JSON validation and local fallback",
       "Qwen tool-call selection route with local registry validation",
+      "App-owned tool execution through registered local tools",
+      "Human approval gate before final artifact generation",
+      "Flight Recorder proof trail with run reports",
+      "Safe fallback modes for missing Qwen env vars",
       "Execution modes for local, Qwen plan, Qwen tools, and auto fallback",
       "Judge-facing architecture proof page",
     ],
@@ -94,11 +98,11 @@ const buildStatus = [
   {
     label: "Planned next",
     items: [
-      "Real Qwen credential testing against the final Alibaba Cloud account",
+      "Webhook/n8n trigger bridge",
+      "Alibaba Cloud deployment proof",
+      "Export and download improvements",
+      "Demo video polish",
       "Persistent artifact storage beyond the in-memory MVP store",
-      "Authenticated approval decisions for shared deployments",
-      "Webhook bridge for external trigger intake",
-      "Alibaba Cloud proof path",
     ],
   },
 ];

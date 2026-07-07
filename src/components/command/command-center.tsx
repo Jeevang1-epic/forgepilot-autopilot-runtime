@@ -141,6 +141,9 @@ export function CommandCenter() {
         <span className="w-fit rounded-full border border-white/10 bg-black/30 px-3 py-1.5 text-xs text-white/66">
           Qwen {qwenStatus === "checking" ? "checking" : qwenStatus.replace("-", " ")}
         </span>
+        <span className="w-fit rounded-full border border-teal-200/25 bg-teal-200/10 px-3 py-1.5 text-xs font-semibold text-teal-100">
+          Recommended for demo: Auto
+        </span>
       </div>
 
       <label className="mt-6 block">
@@ -167,8 +170,8 @@ export function CommandCenter() {
             <span className="text-sm font-medium text-white/72">Planner mode</span>
             <p className="mt-1 text-xs leading-5 text-white/50">
               Auto uses Qwen Cloud when env vars are available, otherwise ForgePilot
-              safely falls back to the local deterministic planner. Tool execution
-              still happens inside the local runtime.
+              safely falls back to the local deterministic planner. Recommended for
+              demos because it works with or without Qwen env vars.
             </p>
           </div>
           <span className="w-fit rounded-full border border-white/10 bg-black/30 px-3 py-1 text-xs capitalize text-white/62">
@@ -183,8 +186,8 @@ export function CommandCenter() {
           <div>
             <span className="text-sm font-medium text-white/72">Execution mode</span>
             <p className="mt-1 text-xs leading-5 text-white/50">
-              Qwen may select tools, but ForgePilot validates and executes them through
-              the local registry.
+              Local Runtime is offline. Qwen Plan creates the plan. Qwen Tool Calling
+              selects tools. ForgePilot always validates and executes locally.
             </p>
           </div>
           <span className="w-fit rounded-full border border-white/10 bg-black/30 px-3 py-1 text-xs capitalize text-white/62">

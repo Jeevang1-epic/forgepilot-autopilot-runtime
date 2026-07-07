@@ -11,17 +11,17 @@ const executionModes: Array<{
   {
     value: "local",
     label: "Local Runtime",
-    description: "Deterministic offline flow.",
+    description: "Deterministic offline execution.",
   },
   {
     value: "qwen_plan",
     label: "Qwen Plan",
-    description: "Qwen plans, app executes.",
+    description: "Qwen creates plan, ForgePilot executes.",
   },
   {
     value: "qwen_tools",
     label: "Qwen Tool Calling",
-    description: "Qwen selects, app validates and executes.",
+    description: "Qwen selects tools, ForgePilot validates and executes.",
   },
   {
     value: "auto",
