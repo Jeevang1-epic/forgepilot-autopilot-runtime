@@ -54,25 +54,25 @@ const proofSections = [
   },
   {
     eyebrow: "Bridge",
-    title: "Future n8n webhook bridge",
-    body: "A future bridge can let n8n trigger ForgePilot runs while ForgePilot keeps planning, approval, and artifact writing local.",
+    title: "Webhook trigger bridge",
+    body: "The inbound webhook route can accept manual tests, n8n payloads, or external trigger payloads while ForgePilot keeps planning, approval, and artifact writing local.",
     points: [
       "Webhook triggers map cleanly into the same Trigger Engine type used by manual commands.",
       "External automation can start runs without bypassing approval gates.",
-      "The bridge can return run IDs and report paths for downstream orchestration.",
+      "The bridge returns run IDs and a Flight Recorder URL for downstream orchestration proof.",
     ],
   },
 ];
 
 const proofChecklist = [
-  "One command starts a workflow",
-  "Qwen can select tools when configured",
-  "Local fallback protects the run",
-  "Tools are validated before execution",
-  "Human approval blocks final artifact writing",
-  "Artifacts appear only after approval",
+  "Qwen Cloud API adapter is implemented; credentialed production testing is planned",
+  "Tool-calling adapter is implemented with local registry validation",
+  "Human approval gate is implemented before final artifact generation",
+  "Generated artifacts are implemented after approval",
+  "Webhook trigger route and Trigger Lab are implemented",
+  "Optional n8n live workflow remains planned",
+  "Alibaba Cloud proof path remains planned",
   "Run report captures proof",
-  "External automation remains planned",
 ];
 
 const buildStatus = [
@@ -90,15 +90,18 @@ const buildStatus = [
       "App-owned tool execution through registered local tools",
       "Human approval gate before final artifact generation",
       "Flight Recorder proof trail with run reports",
+      "Inbound webhook route for validated trigger payloads",
+      "Trigger Lab UI for local webhook smoke tests",
       "Safe fallback modes for missing Qwen env vars",
       "Execution modes for local, Qwen plan, Qwen tools, and auto fallback",
       "Judge-facing architecture proof page",
+      "Submission Proof Pack page",
     ],
   },
   {
     label: "Planned next",
     items: [
-      "Webhook/n8n trigger bridge",
+      "Optional live n8n workflow template connected to the webhook route",
       "Alibaba Cloud deployment proof",
       "Export and download improvements",
       "Demo video polish",
