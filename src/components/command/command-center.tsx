@@ -4,12 +4,14 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import type {
+  ExecutionModeRequested,
   ForgePilotRun,
   PlannerModeRequested,
   TriggerType,
 } from "@/lib/runtime/types";
 import { cn } from "@/lib/utils";
 
+import { ExecutionModeSelector } from "./execution-mode-selector";
 import { PlannerModeSelector } from "./planner-mode-selector";
 import { TriggerSelector } from "./trigger-selector";
 
@@ -43,6 +45,7 @@ type QwenHealthData = {
     configured: boolean;
     modelName?: string;
   };
+  qwenToolCallingAvailable: boolean;
 };
 
 export function CommandCenter() {
@@ -50,6 +53,7 @@ export function CommandCenter() {
   const [command, setCommand] = useState(defaultCommand);
   const [triggerType, setTriggerType] = useState<TriggerType>("manual");
   const [plannerMode, setPlannerMode] = useState<PlannerModeRequested>("auto");
+  const [executionMode, setExecutionMode] = useState<ExecutionModeRequested>("auto");
   const [qwenStatus, setQwenStatus] = useState<
     "checking" | "configured" | "not-configured"
   >("checking");
@@ -100,6 +104,7 @@ export function CommandCenter() {
         body: JSON.stringify({
           goal: command,
           plannerMode,
+          executionMode,
         }),
       });
       const payload = (await response.json()) as ApiResponse<{
@@ -159,7 +164,7 @@ export function CommandCenter() {
       <div className="mt-5">
         <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
-          <span className="text-sm font-medium text-white/72">Planner mode</span>
+            <span className="text-sm font-medium text-white/72">Planner mode</span>
             <p className="mt-1 text-xs leading-5 text-white/50">
               Auto uses Qwen Cloud when env vars are available, otherwise ForgePilot
               safely falls back to the local deterministic planner. Tool execution
@@ -171,6 +176,22 @@ export function CommandCenter() {
           </span>
         </div>
         <PlannerModeSelector value={plannerMode} onChange={setPlannerMode} />
+      </div>
+
+      <div className="mt-5">
+        <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <span className="text-sm font-medium text-white/72">Execution mode</span>
+            <p className="mt-1 text-xs leading-5 text-white/50">
+              Qwen may select tools, but ForgePilot validates and executes them through
+              the local registry.
+            </p>
+          </div>
+          <span className="w-fit rounded-full border border-white/10 bg-black/30 px-3 py-1 text-xs capitalize text-white/62">
+            {executionMode.replace("_", " ")}
+          </span>
+        </div>
+        <ExecutionModeSelector value={executionMode} onChange={setExecutionMode} />
       </div>
 
       <div className="mt-6 grid gap-3 sm:grid-cols-4">

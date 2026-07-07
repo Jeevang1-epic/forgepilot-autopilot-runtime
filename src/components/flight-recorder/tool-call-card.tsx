@@ -29,6 +29,11 @@ export function ToolCallCard({ toolCall }: ToolCallCardProps) {
           </h3>
         </div>
         <div className="flex flex-wrap gap-2">
+          {toolCall.selectedBy ? (
+            <span className="rounded-full border border-cyan-200/25 bg-cyan-200/10 px-2.5 py-1 text-xs capitalize text-cyan-100">
+              selected by {toolCall.selectedBy}
+            </span>
+          ) : null}
           <span className={cn("rounded-full border px-2.5 py-1 text-xs capitalize", statusTone[toolCall.status])}>
             {toolCall.status}
           </span>
@@ -47,6 +52,35 @@ export function ToolCallCard({ toolCall }: ToolCallCardProps) {
           <p className="text-xs uppercase tracking-[0.18em] text-white/42">Output</p>
           <p className="mt-2 text-sm leading-6 text-white/66">
             {toolCall.outputSummary ?? "No output recorded yet."}
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-3 grid gap-2 sm:grid-cols-3">
+        <div className="rounded-lg border border-white/10 bg-black/25 px-3 py-2">
+          <p className="text-[11px] uppercase tracking-[0.16em] text-white/40">
+            Validation
+          </p>
+          <p className="mt-1 text-xs font-semibold capitalize text-white/70">
+            {toolCall.validationStatus ?? "recorded"}
+          </p>
+        </div>
+        <div className="rounded-lg border border-white/10 bg-black/25 px-3 py-2">
+          <p className="text-[11px] uppercase tracking-[0.16em] text-white/40">
+            Executor
+          </p>
+          <p className="mt-1 text-xs font-semibold text-white/70">
+            {toolCall.executionOwner === "forgepilot-runtime"
+              ? "ForgePilot runtime"
+              : "Local record"}
+          </p>
+        </div>
+        <div className="rounded-lg border border-white/10 bg-black/25 px-3 py-2">
+          <p className="text-[11px] uppercase tracking-[0.16em] text-white/40">
+            Provider
+          </p>
+          <p className="mt-1 text-xs font-semibold capitalize text-white/70">
+            {toolCall.provider}
           </p>
         </div>
       </div>

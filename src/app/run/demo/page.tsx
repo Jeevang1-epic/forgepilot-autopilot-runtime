@@ -1,5 +1,6 @@
 "use client";
 
+import { ExecutionModeSelector } from "@/components/command/execution-mode-selector";
 import { PlannerModeSelector } from "@/components/command/planner-mode-selector";
 import { ArtifactPanel } from "@/components/flight-recorder/artifact-panel";
 import { ApprovalPreview } from "@/components/flight-recorder/approval-preview";
@@ -8,6 +9,8 @@ import { ToolCallCard } from "@/components/flight-recorder/tool-call-card";
 import { demoRun } from "@/lib/runtime/sample-runs";
 import type {
   ApprovalDecision,
+  ExecutionModeRequested,
+  ExecutionModeUsed,
   ForgePilotRun,
   PlannerModeRequested,
   PlannerModeUsed,
@@ -51,10 +54,29 @@ const plannerModeTone: Record<PlannerModeUsed, string> = {
   local_fallback: "border-amber-200/35 bg-amber-200/12 text-amber-100",
 };
 
+const executionModeLabel: Record<ExecutionModeUsed, string> = {
+  local: "Local runtime execution",
+  qwen_plan: "Qwen plan, local execution",
+  qwen_tools: "Qwen tool selection, local execution",
+  qwen_tools_with_local_completion: "Qwen tool selection with local completion",
+  local_fallback: "Local fallback execution",
+};
+
+const executionModeTone: Record<ExecutionModeUsed, string> = {
+  local: "border-white/12 bg-white/[0.06] text-white/72",
+  qwen_plan: "border-cyan-200/30 bg-cyan-200/10 text-cyan-100",
+  qwen_tools: "border-teal-200/30 bg-teal-200/10 text-teal-100",
+  qwen_tools_with_local_completion:
+    "border-amber-200/35 bg-amber-200/12 text-amber-100",
+  local_fallback: "border-amber-200/35 bg-amber-200/12 text-amber-100",
+};
+
 export default function DemoRunPage() {
   const router = useRouter();
   const [run, setRun] = useState<ForgePilotRun>(demoRun);
   const [plannerMode, setPlannerMode] = useState<PlannerModeRequested>("auto");
+  const [executionMode, setExecutionMode] =
+    useState<ExecutionModeRequested>("auto");
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmittingApproval, setIsSubmittingApproval] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -65,6 +87,10 @@ export default function DemoRunPage() {
       run.approvalRequests.find((item) => item.status === "requested") ??
       run.approvalRequests[0],
     [run.approvalRequests],
+  );
+  const runtimeWarnings = useMemo(
+    () => [...new Set([...run.plannerWarnings, ...run.qwenToolCallWarnings])],
+    [run.plannerWarnings, run.qwenToolCallWarnings],
   );
 
   useEffect(() => {
@@ -85,6 +111,7 @@ export default function DemoRunPage() {
               },
               body: JSON.stringify({
                 plannerMode: "auto",
+                executionMode: "auto",
               }),
             });
         const payload = (await response.json()) as ApiResponse<{
@@ -101,6 +128,7 @@ export default function DemoRunPage() {
 
         setRun(payload.data.run);
         setPlannerMode(payload.data.run.plannerModeRequested);
+        setExecutionMode(payload.data.run.executionModeRequested);
 
         if (!runId) {
           router.replace(`/run/demo?runId=${payload.data.run.id}`);
@@ -142,6 +170,7 @@ export default function DemoRunPage() {
         },
         body: JSON.stringify({
           plannerMode,
+          executionMode,
         }),
       });
       const payload = (await response.json()) as ApiResponse<{
@@ -154,6 +183,7 @@ export default function DemoRunPage() {
 
       setRun(payload.data.run);
       setPlannerMode(payload.data.run.plannerModeRequested);
+      setExecutionMode(payload.data.run.executionModeRequested);
       router.replace(`/run/demo?runId=${payload.data.run.id}`);
     } catch (replayError) {
       setError(
@@ -240,9 +270,9 @@ export default function DemoRunPage() {
                 {isLoading ? "loading" : run.status.replace("_", " ")}
               </span>
             </div>
-            {run.plannerWarnings.length > 0 ? (
+            {runtimeWarnings.length > 0 ? (
               <div className="mt-3 space-y-2">
-                {run.plannerWarnings.map((warning) => (
+                {runtimeWarnings.map((warning) => (
                   <p
                     key={warning}
                     className="max-w-3xl rounded-lg border border-amber-200/25 bg-amber-200/10 px-3 py-2 text-sm text-amber-100"
@@ -282,23 +312,44 @@ export default function DemoRunPage() {
         </div>
 
         <div className="mt-6 grid gap-4 border-t border-white/10 pt-5 xl:grid-cols-[1fr_22rem]">
-          <div>
-            <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <p className="text-sm font-medium text-white/72">Planner mode for replay</p>
-                <p className="mt-1 text-xs leading-5 text-white/50">
-                  Replays create a new run with the selected planner mode.
-                </p>
+          <div className="grid gap-4 lg:grid-cols-2">
+            <div>
+              <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <p className="text-sm font-medium text-white/72">Planner mode for replay</p>
+                  <p className="mt-1 text-xs leading-5 text-white/50">
+                    Replays create a new run with the selected planning brain.
+                  </p>
+                </div>
+                <span className="w-fit rounded-full border border-white/10 bg-black/30 px-3 py-1 text-xs capitalize text-white/62">
+                  {plannerMode}
+                </span>
               </div>
-              <span className="w-fit rounded-full border border-white/10 bg-black/30 px-3 py-1 text-xs capitalize text-white/62">
-                {plannerMode}
-              </span>
+              <PlannerModeSelector
+                value={plannerMode}
+                onChange={setPlannerMode}
+                compact
+              />
             </div>
-            <PlannerModeSelector
-              value={plannerMode}
-              onChange={setPlannerMode}
-              compact
-            />
+
+            <div>
+              <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <p className="text-sm font-medium text-white/72">Execution mode for replay</p>
+                  <p className="mt-1 text-xs leading-5 text-white/50">
+                    Qwen can select tools, but ForgePilot still validates and executes.
+                  </p>
+                </div>
+                <span className="w-fit rounded-full border border-white/10 bg-black/30 px-3 py-1 text-xs capitalize text-white/62">
+                  {executionMode.replace("_", " ")}
+                </span>
+              </div>
+              <ExecutionModeSelector
+                value={executionMode}
+                onChange={setExecutionMode}
+                compact
+              />
+            </div>
           </div>
 
           <div className="flex flex-col justify-end gap-3 sm:flex-row xl:flex-col">
@@ -325,33 +376,50 @@ export default function DemoRunPage() {
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-teal-200/70">
-              Planner Brain
+              Runtime Brain
             </p>
             <h2 className="mt-2 text-2xl font-semibold text-white">
-              {plannerModeLabel[run.plannerModeUsed]}
+              {executionModeLabel[run.executionModeUsed]}
             </h2>
             <p className="mt-3 max-w-3xl text-sm leading-6 text-white/62">
-              ForgePilot uses the planner only to produce a validated plan. Tool
-              execution, approvals, artifact creation, and run reports stay inside the
-              runtime.
+              Qwen can plan or select tools when configured, but ForgePilot validates
+              every selection against the local registry and keeps execution, approvals,
+              artifact creation, and reports inside the runtime.
             </p>
           </div>
-          <span className={`w-fit rounded-full border px-3 py-1.5 text-xs font-semibold ${plannerModeTone[run.plannerModeUsed]}`}>
-            {run.plannerModeUsed.replace("_", " ")}
-          </span>
+          <div className="flex flex-wrap gap-2">
+            <span className={`w-fit rounded-full border px-3 py-1.5 text-xs font-semibold ${plannerModeTone[run.plannerModeUsed]}`}>
+              {run.plannerModeUsed.replace("_", " ")}
+            </span>
+            <span className={`w-fit rounded-full border px-3 py-1.5 text-xs font-semibold ${executionModeTone[run.executionModeUsed]}`}>
+              {run.executionModeUsed.replaceAll("_", " ")}
+            </span>
+          </div>
         </div>
 
         <div className="mt-5 grid gap-3 md:grid-cols-4">
           <div className="rounded-lg border border-white/10 bg-black/25 p-4">
-            <p className="text-xs uppercase tracking-[0.18em] text-white/42">Requested</p>
+            <p className="text-xs uppercase tracking-[0.18em] text-white/42">Planner requested</p>
             <p className="mt-2 text-sm font-semibold capitalize text-white">
               {run.plannerModeRequested}
             </p>
           </div>
           <div className="rounded-lg border border-white/10 bg-black/25 p-4">
-            <p className="text-xs uppercase tracking-[0.18em] text-white/42">Used</p>
+            <p className="text-xs uppercase tracking-[0.18em] text-white/42">Planner used</p>
             <p className="mt-2 text-sm font-semibold text-white">
               {plannerModeLabel[run.plannerModeUsed]}
+            </p>
+          </div>
+          <div className="rounded-lg border border-white/10 bg-black/25 p-4">
+            <p className="text-xs uppercase tracking-[0.18em] text-white/42">Execution requested</p>
+            <p className="mt-2 text-sm font-semibold capitalize text-white">
+              {run.executionModeRequested.replace("_", " ")}
+            </p>
+          </div>
+          <div className="rounded-lg border border-white/10 bg-black/25 p-4">
+            <p className="text-xs uppercase tracking-[0.18em] text-white/42">Execution used</p>
+            <p className="mt-2 text-sm font-semibold text-white">
+              {executionModeLabel[run.executionModeUsed]}
             </p>
           </div>
           <div className="rounded-lg border border-white/10 bg-black/25 p-4">
@@ -367,20 +435,41 @@ export default function DemoRunPage() {
             </p>
           </div>
           <div className="rounded-lg border border-white/10 bg-black/25 p-4 md:col-span-2">
+            <p className="text-xs uppercase tracking-[0.18em] text-white/42">Qwen tool calling</p>
+            <p className="mt-2 text-sm font-semibold text-white">
+              {run.qwenToolCallingUsed
+                ? "Used for selection, executed locally"
+                : "Not used for this run"}
+            </p>
+          </div>
+          <div className="rounded-lg border border-white/10 bg-black/25 p-4">
             <p className="text-xs uppercase tracking-[0.18em] text-white/42">JSON repair</p>
             <p className="mt-2 text-sm font-semibold text-white">
               {run.qwenJsonRepairUsed ? "Used and recorded" : "Not needed"}
             </p>
           </div>
-          <div className="rounded-lg border border-white/10 bg-black/25 p-4 md:col-span-2">
+          <div className="rounded-lg border border-white/10 bg-black/25 p-4">
             <p className="text-xs uppercase tracking-[0.18em] text-white/42">Fallback posture</p>
             <p className="mt-2 text-sm leading-6 text-white/68">
-              {run.plannerModeUsed === "local_fallback"
+              {run.plannerModeUsed === "local_fallback" ||
+              run.executionModeUsed === "local_fallback"
                 ? "Fallback protected the run from config/model failure."
                 : "No fallback was needed for this run."}
             </p>
           </div>
         </div>
+
+        {run.blockedUnsafeToolCalls.length > 0 ? (
+          <div className="mt-4 rounded-lg border border-amber-200/25 bg-amber-200/10 p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-100/70">
+              Blocked unsafe tool calls
+            </p>
+            <p className="mt-2 text-sm leading-6 text-amber-100">
+              Runtime guard stopped: {run.blockedUnsafeToolCalls.join(", ")}.
+              These tool calls were selected before approval.
+            </p>
+          </div>
+        ) : null}
       </section>
 
       {approval ? (
