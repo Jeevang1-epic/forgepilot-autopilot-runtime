@@ -44,9 +44,18 @@ export type ExecutionModeUsed =
   | "qwen_tools_with_local_completion"
   | "local_fallback";
 
-export type ToolSelectionSource = "runtime" | "qwen";
+export type ToolSelectionSource = "runtime" | "qwen" | "local_completion";
 
 export type ToolValidationStatus = "passed" | "failed" | "blocked";
+
+export type BlockedToolCall = {
+  toolName: string;
+  reason: string;
+  safetyRule: string;
+  fallbackAction: string;
+  blockedAt: string;
+  riskLevel: RiskLevel;
+};
 
 export type PlanStep = {
   id: string;
@@ -93,6 +102,7 @@ export type ToolCall = {
   output?: unknown;
   startedAt: string;
   completedAt?: string;
+  requiresApproval?: boolean;
   selectedBy?: ToolSelectionSource;
   validationStatus?: ToolValidationStatus;
   executionOwner?: "forgepilot-runtime";
@@ -163,9 +173,15 @@ export type ForgePilotRun = {
   plannerWarnings: string[];
   executionModeRequested: ExecutionModeRequested;
   executionModeUsed: ExecutionModeUsed;
+  qwenToolCallingAvailable: boolean;
   qwenToolCallingUsed: boolean;
   qwenToolCallWarnings: string[];
-  blockedUnsafeToolCalls: string[];
+  toolManifestCount: number;
+  selectedToolsCount: number;
+  locallyCompletedToolsCount: number;
+  blockedUnsafeToolCallsCount: number;
+  maxToolLoopHit: boolean;
+  blockedUnsafeToolCalls: BlockedToolCall[];
 };
 
 export type CreateRunInput = {

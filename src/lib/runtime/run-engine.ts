@@ -2,6 +2,7 @@ import { createRunSchema } from "@/lib/validation/schemas";
 import { getQwenConfigStatus } from "@/lib/qwen/client";
 import { createPlannerResolution } from "@/lib/qwen/planner";
 import { callQwenForNextTool } from "@/lib/qwen/tool-calling";
+import { getOpenAICompatibleToolDefinitions } from "@/lib/qwen/tool-manifest";
 
 import {
   buildArtifactWriteInput,
@@ -33,7 +34,7 @@ import type {
 
 const approvalToolName = "request_human_approval";
 const artifactWriterToolName = "write_markdown_file";
-const maxQwenToolSteps = 8;
+export const maxQwenToolSteps = 8;
 const requiredPreApprovalToolNames = [
   "scan_project_status",
   "generate_submission_checklist",
@@ -75,6 +76,7 @@ async function executeToolForRun(
   options: ToolRunOptions = {},
 ) {
   const startedAt = new Date().toISOString();
+  const registeredTool = getToolDefinition(toolName);
   markPlanStep(run, toolName, "running");
 
   try {
@@ -97,6 +99,7 @@ async function executeToolForRun(
       output: result.data,
       startedAt,
       completedAt,
+      requiresApproval: tool.requiresApproval,
       selectedBy: options.selectedBy ?? "runtime",
       validationStatus: options.validationStatus ?? "passed",
       executionOwner: "forgepilot-runtime",
@@ -133,6 +136,7 @@ async function executeToolForRun(
         error instanceof Error ? error.message : "Tool execution failed.",
       startedAt,
       completedAt: failedAt,
+      requiresApproval: registeredTool?.requiresApproval ?? false,
       selectedBy: options.selectedBy ?? "runtime",
       validationStatus: "failed",
       executionOwner: "forgepilot-runtime",
@@ -160,7 +164,11 @@ async function executeToolForRun(
 export function createAutopilotRun(input: CreateRunInput) {
   const parsedInput = createRunSchema.parse(input);
   const run = createRunRecord(parsedInput);
-  run.qwenConfigured = getQwenConfigStatus().configured;
+  const qwenConfig = getQwenConfigStatus();
+
+  run.qwenConfigured = qwenConfig.configured;
+  run.toolManifestCount = getOpenAICompatibleToolDefinitions().length;
+  run.qwenToolCallingAvailable = qwenConfig.configured && run.toolManifestCount > 0;
 
   recordTimelineStep(run, {
     title: "Trigger received",
@@ -230,6 +238,9 @@ function buildQwenToolContext(run: ForgePilotRun) {
     plannerModeUsed: run.plannerModeUsed,
     executionModeRequested: run.executionModeRequested,
     completedTools: [...getCompletedToolNames(run)],
+    selectedToolsCount: run.selectedToolsCount,
+    locallyCompletedToolsCount: run.locallyCompletedToolsCount,
+    maxToolLoopHit: run.maxToolLoopHit,
     warnings: run.qwenToolCallWarnings,
     lastToolOutputs: run.toolCalls.slice(-3).map((toolCall) => ({
       name: toolCall.name,
@@ -242,7 +253,15 @@ function buildQwenToolContext(run: ForgePilotRun) {
 function recordUnsafeToolBlock(run: ForgePilotRun, toolName: string) {
   const warning = `Qwen selected ${toolName} before approval; ForgePilot blocked it and requested human approval.`;
   run.qwenToolCallWarnings.push(warning);
-  run.blockedUnsafeToolCalls.push(toolName);
+  run.blockedUnsafeToolCalls.push({
+    toolName,
+    reason: "Qwen selected a final artifact writer before human approval.",
+    safetyRule: "Final artifact writing requires an approved human checkpoint.",
+    fallbackAction: "Request human approval before any artifact writer runs.",
+    blockedAt: new Date().toISOString(),
+    riskLevel: "high",
+  });
+  run.blockedUnsafeToolCallsCount = run.blockedUnsafeToolCalls.length;
   recordTimelineStep(run, {
     title: "Unsafe Qwen tool call blocked",
     description: warning,
@@ -290,18 +309,25 @@ async function completeMissingRequiredToolsLocally(run: ForgePilotRun) {
 
   if (missingTools.length > 0 && run.qwenToolCallingUsed) {
     run.executionModeUsed = "qwen_tools_with_local_completion";
+    run.locallyCompletedToolsCount += missingTools.length;
     run.qwenToolCallWarnings.push(
       `ForgePilot completed missing required tools locally: ${missingTools.join(", ")}.`,
     );
   }
 
   for (const toolName of missingTools) {
-    await executeToolForRun(run, toolName, {});
+    await executeToolForRun(run, toolName, {}, {
+      selectedBy: run.qwenToolCallingUsed ? "local_completion" : "runtime",
+      validationStatus: "passed",
+    });
   }
 }
 
 async function executeQwenGuidedPreApprovalTools(run: ForgePilotRun) {
+  let loopCount = 0;
+
   for (let step = 0; step < maxQwenToolSteps; step += 1) {
+    loopCount = step + 1;
     const qwenResult = await callQwenForNextTool({
       goal: run.goal,
       context: buildQwenToolContext(run),
@@ -311,6 +337,7 @@ async function executeQwenGuidedPreApprovalTools(run: ForgePilotRun) {
     });
 
     run.qwenConfigured = qwenResult.qwenConfigured;
+    run.qwenToolCallingAvailable = qwenResult.qwenToolCallingAvailable;
     run.qwenModel = qwenResult.qwenModel ?? run.qwenModel;
     run.qwenToolCallWarnings.push(...qwenResult.warnings);
 
@@ -319,6 +346,7 @@ async function executeQwenGuidedPreApprovalTools(run: ForgePilotRun) {
     }
 
     run.qwenToolCallingUsed = true;
+    run.selectedToolsCount += 1;
     const selectedTool = qwenResult.selectedToolCall;
 
     recordTimelineStep(run, {
@@ -352,6 +380,21 @@ async function executeQwenGuidedPreApprovalTools(run: ForgePilotRun) {
     if (getMissingRequiredTools(run).length === 0) {
       break;
     }
+  }
+
+  if (loopCount >= maxQwenToolSteps && getMissingRequiredTools(run).length > 0) {
+    run.maxToolLoopHit = true;
+    run.qwenToolCallWarnings.push(
+      `Qwen tool selection reached the ${maxQwenToolSteps}-step safety limit; ForgePilot completed missing tools locally.`,
+    );
+    recordTimelineStep(run, {
+      title: "Qwen tool loop limit reached",
+      description:
+        "ForgePilot stopped asking Qwen for tool selections and continued with local completion.",
+      status: "blocked",
+      toolName: "runtime.executor",
+      riskLevel: "medium",
+    });
   }
 
   await completeMissingRequiredToolsLocally(run);
@@ -440,6 +483,8 @@ export async function executeAutopilotRun(runId: string) {
     run.status = "running";
     run.summary = "Executing typed tools from the validated planner output.";
     const qwenConfig = getQwenConfigStatus();
+    run.toolManifestCount = getOpenAICompatibleToolDefinitions().length;
+    run.qwenToolCallingAvailable = qwenConfig.configured && run.toolManifestCount > 0;
     const shouldUseQwenTools =
       run.executionModeRequested === "qwen_tools" ||
       (run.executionModeRequested === "auto" && qwenConfig.configured);
@@ -473,9 +518,7 @@ export async function executeAutopilotRun(runId: string) {
         !qwenConfig.configured
       ) {
         run.qwenToolCallWarnings.push(
-          run.executionModeRequested === "auto"
-            ? "Qwen tool calling is not configured, so auto mode used local runtime execution."
-            : "Qwen tool calling is not configured, so qwen_tools mode used local fallback execution.",
+          "Qwen Tool Calling unavailable - ForgePilot continued with local fallback.",
         );
       }
 

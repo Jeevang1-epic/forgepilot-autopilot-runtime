@@ -118,8 +118,14 @@ export function createRunRecord(input: CreateRunInput): ForgePilotRun {
     plannerWarnings: [],
     executionModeRequested: input.executionMode ?? "auto",
     executionModeUsed: "local",
+    qwenToolCallingAvailable: false,
     qwenToolCallingUsed: false,
     qwenToolCallWarnings: [],
+    toolManifestCount: 0,
+    selectedToolsCount: 0,
+    locallyCompletedToolsCount: 0,
+    blockedUnsafeToolCallsCount: 0,
+    maxToolLoopHit: false,
     blockedUnsafeToolCalls: [],
   };
 }
