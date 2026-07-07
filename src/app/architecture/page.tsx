@@ -119,6 +119,45 @@ const qwenAdapterFacts = [
   "Falls back locally in auto mode when config or model output is unsafe.",
 ];
 
+const runtimeControlBlocks = [
+  {
+    title: "App-owned execution",
+    body: "ForgePilot owns every tool invocation. Qwen can plan or select, but only the local runtime dispatches registered tools.",
+  },
+  {
+    title: "Qwen planner and selector",
+    body: "Qwen adapters are server-side and env-driven. Auto mode falls back locally when Qwen credentials are absent or output is unsafe.",
+  },
+  {
+    title: "Typed registry",
+    body: "Tools have names, descriptions, Zod input schemas, risk levels, approval flags, and local execute functions.",
+  },
+  {
+    title: "Approval gate",
+    body: "Final artifact writing pauses at awaiting_approval and continues only after a recorded human decision.",
+  },
+  {
+    title: "Webhook bridge",
+    body: "The webhook route accepts validated manual, n8n, or external trigger payloads without bypassing approval.",
+  },
+  {
+    title: "Artifact writer",
+    body: "The MVP creates safe runtime artifact objects after approval instead of writing unreviewed files to disk.",
+  },
+  {
+    title: "Flight Recorder",
+    body: "Timeline, tool calls, approvals, artifacts, warnings, and reports stay inspectable after the run.",
+  },
+];
+
+const mvpLimitations = [
+  "Runs are stored in memory for the MVP and reset when the server process restarts.",
+  "Artifacts are runtime objects, not durable exported files yet.",
+  "Qwen credentials are not committed; credentialed verification must happen in the deployment environment.",
+  "Alibaba Cloud deployment is a documented proof path, not claimed as complete.",
+  "No real Gmail, LinkedIn, GitHub, posting, or deployment actions are implemented.",
+];
+
 export default function ArchitecturePage() {
   return (
     <div className="space-y-6">
@@ -138,6 +177,35 @@ export default function ArchitecturePage() {
       </section>
 
       <ArchitectureMap />
+
+      <section className="rounded-lg border border-white/10 bg-white/[0.045] p-5 shadow-2xl shadow-black/20 sm:p-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-teal-200/70">
+              Runtime Control Model
+            </p>
+            <h2 className="mt-2 text-3xl font-semibold text-white">
+              Intelligence is separate from authority
+            </h2>
+            <p className="mt-3 max-w-3xl text-sm leading-6 text-white/64">
+              ForgePilot is designed so model output can guide the workflow without
+              owning execution, approval, artifact writing, or the final proof trail.
+            </p>
+          </div>
+          <span className="w-fit rounded-full border border-white/10 bg-black/30 px-3 py-1.5 text-xs text-white/66">
+            no production readiness overclaim
+          </span>
+        </div>
+
+        <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          {runtimeControlBlocks.map((block) => (
+            <article key={block.title} className="rounded-lg border border-white/10 bg-black/25 p-4">
+              <h3 className="text-base font-semibold text-white">{block.title}</h3>
+              <p className="mt-3 text-sm leading-6 text-white/66">{block.body}</p>
+            </article>
+          ))}
+        </div>
+      </section>
 
       <section className="rounded-lg border border-cyan-200/18 bg-cyan-200/[0.05] p-5 shadow-2xl shadow-black/20 sm:p-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -207,6 +275,22 @@ export default function ArchitecturePage() {
         {proofSections.map((section) => (
           <ProofSection key={section.title} {...section} />
         ))}
+      </section>
+
+      <section className="rounded-lg border border-amber-200/18 bg-amber-200/[0.055] p-5">
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-amber-100/75">
+          MVP Limitations
+        </p>
+        <h2 className="mt-2 text-2xl font-semibold text-white">
+          What this foundation does not overclaim
+        </h2>
+        <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+          {mvpLimitations.map((item) => (
+            <div key={item} className="rounded-lg border border-white/10 bg-black/25 p-3">
+              <p className="text-sm leading-6 text-white/70">{item}</p>
+            </div>
+          ))}
+        </div>
       </section>
     </div>
   );
