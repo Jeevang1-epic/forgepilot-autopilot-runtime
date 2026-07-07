@@ -56,7 +56,20 @@ The demo workflow pauses at `awaiting_approval` before final artifacts are gener
 8. Artifact Writer creates runtime artifact objects.
 9. Flight Recorder seals the run report after completion.
 
-## Qwen Cloud Planner Setup
+## Demo Path For Judges
+
+1. Run `npm install` and `npm run dev`.
+2. Open `http://localhost:3000`.
+3. Keep Planner mode on `Auto` and Execution mode on `Auto`.
+4. Click `Start Autopilot Run`.
+5. On `/run/demo`, inspect `Runtime Brain`, `Judge Demo Checklist`, `Execution Timeline`, and `Tool calls and outputs`.
+6. Confirm the run pauses at `awaiting_approval` before artifacts exist.
+7. Click `Approve Final Artifact Pack`.
+8. Confirm artifacts appear and `View Run Report` includes planner, execution, fallback, approval, and artifact metadata.
+
+This path works without a Qwen API key. Missing env vars do not break the demo because `auto` mode falls back to local runtime execution.
+
+## Qwen Cloud Runtime Setup
 
 Copy `.env.example` to `.env.local` and provide these values when you want to test Qwen planning. Never commit `.env.local` or real secrets.
 
@@ -81,10 +94,23 @@ Execution modes:
 - `qwen_tools`: ask Qwen to select the next tool, validate the selection locally, then execute only registered local tools.
 - `auto`: use Qwen tool selection when configured, otherwise fall back to local runtime execution.
 
-Fallback behavior:
+## Tool-Calling Safety Model
+
+- Qwen may create a plan or select the next tool only when Qwen env vars are configured.
+- Qwen never executes tools directly.
+- ForgePilot validates selected tool names against the typed local registry.
+- ForgePilot validates tool arguments with Zod before execution.
+- Unknown tools, invalid JSON arguments, unsupported tool-call types, and unsafe selections are blocked.
+- `write_markdown_file` cannot run before an approved human checkpoint.
+- Tool calls record who selected them, who validated them, who executed them, risk level, approval requirement, input summary, and output summary.
+- Run reports include `plannerModeRequested`, `plannerModeUsed`, `executionModeRequested`, `executionModeUsed`, `qwenConfigured`, `qwenModel`, `qwenToolCallingAvailable`, `qwenToolCallingUsed`, `qwenToolCallWarnings`, `toolManifestCount`, `selectedToolsCount`, `locallyCompletedToolsCount`, `blockedUnsafeToolCallsCount`, and `maxToolLoopHit`.
+
+## Fallback Behavior
 
 - If Qwen is not configured, `auto` records `local_fallback` and continues safely.
-- If `qwen_tools` is requested without env vars, ForgePilot records a safe local fallback instead of failing the demo path.
+- If `qwen_tools` is requested through the demo runtime without env vars, ForgePilot records a safe local fallback so the judge demo continues.
+- If `qwen_tools` is requested through `/api/qwen/tool-call` without env vars and fallback is not allowed, the route returns a normalized `QWEN_NOT_CONFIGURED` error.
+- Direct tool-call tests can set `allowFallback: true` or use `executionMode: "auto"` to verify fallback behavior without a Qwen API key.
 - If Qwen returns fenced JSON or surrounding text, ForgePilot attempts JSON repair and records `qwen_repaired`.
 - If Qwen output is still invalid in `auto`, ForgePilot falls back safely to the deterministic local planner.
 - If Qwen output is invalid in `qwen`, ForgePilot returns a clean normalized error instead of pretending a plan worked.
@@ -96,6 +122,15 @@ Planned next Qwen work:
 - Real credential testing against the final Qwen/Alibaba Cloud account.
 - Richer planner/tool evaluation traces.
 - Stronger artifact export and durable storage.
+
+## Known MVP Limits
+
+- Runs are stored in memory and reset when the server process restarts.
+- Artifact writing currently creates runtime artifact objects, not durable files on disk.
+- Approval is local-demo approval, not authenticated multi-user approval.
+- No webhook/n8n bridge is implemented yet.
+- No Alibaba Cloud deployment proof is implemented yet.
+- No real Gmail, LinkedIn, GitHub, email, posting, deployment, or outbound external automation is implemented.
 
 ## Human Approval Gate
 
@@ -185,7 +220,7 @@ Invoke-RestMethod -Method GET -Uri http://localhost:3000/api/runs/health
 Invoke-RestMethod -Method GET -Uri http://localhost:3000/api/qwen/health
 ```
 
-The health check verifies the tool registry, safe Qwen config status, planner modes, execution modes, tool manifest counts, demo run pause, approval completion, artifact generation, and forbidden marker-file absence.
+The health check verifies the tool registry, safe Qwen config status, planner modes, execution modes, tool manifest counts, demo run pause, approval blocking, approval completion, duplicate approval idempotence, rejected approval safety, auto fallback, qwen_tools missing-env behavior, artifact generation, and forbidden marker-file absence.
 
 Planner route local-mode smoke test:
 
@@ -225,17 +260,78 @@ Invoke-RestMethod `
   -Body '{"goal":"Prepare my Qwen Cloud hackathon submission pack.","plannerMode":"qwen"}'
 ```
 
+## How To Test Without Qwen API Key
+
+Use `auto` mode for the judge demo path. It should fall back locally and still pause before artifact generation.
+
 Demo run API smoke test:
 
 ```powershell
-Invoke-RestMethod `
+$demo = Invoke-RestMethod `
   -Method POST `
   -Uri http://localhost:3000/api/runs/demo `
   -ContentType "application/json" `
   -Body '{"plannerMode":"auto","executionMode":"auto"}'
+
+$demo.data.run.status
+$demo.data.run.executionModeUsed
+$demo.data.run.qwenToolCallWarnings
 ```
 
-Tool-call validation smoke test:
+Tool-call fallback smoke test without a Qwen key:
+
+```powershell
+Invoke-RestMethod `
+  -Method POST `
+  -Uri http://localhost:3000/api/qwen/tool-call `
+  -ContentType "application/json" `
+  -Body '{"goal":"Prepare my Qwen Cloud hackathon submission pack.","executionMode":"auto","context":{"completedTools":[]}}'
+```
+
+Direct `qwen_tools` without fallback should return a normalized `QWEN_NOT_CONFIGURED` error when env vars are missing:
+
+```powershell
+try {
+  Invoke-RestMethod `
+    -Method POST `
+    -Uri http://localhost:3000/api/qwen/tool-call `
+    -ContentType "application/json" `
+    -Body '{"goal":"Prepare my Qwen Cloud hackathon submission pack.","executionMode":"qwen_tools","context":{"completedTools":[]}}'
+} catch {
+  $_.ErrorDetails.Message
+}
+```
+
+Approval flow smoke test:
+
+```powershell
+$demo = Invoke-RestMethod `
+  -Method POST `
+  -Uri http://localhost:3000/api/runs/demo `
+  -ContentType "application/json" `
+  -Body '{"plannerMode":"auto","executionMode":"auto"}'
+
+$approvalId = $demo.data.run.approvalRequests[0].id
+
+$approved = Invoke-RestMethod `
+  -Method POST `
+  -Uri http://localhost:3000/api/approvals `
+  -ContentType "application/json" `
+  -Body (@{ approvalId = $approvalId; decision = "approved" } | ConvertTo-Json)
+
+$approved.data.run.status
+$approved.data.run.artifacts.Count
+```
+
+## How To Test With Qwen API Key
+
+After setting `.env.local`, restart `npm run dev` so Next.js loads the env vars.
+
+```powershell
+Invoke-RestMethod `
+  -Method GET `
+  -Uri http://localhost:3000/api/qwen/health
+```
 
 ```powershell
 Invoke-RestMethod `
@@ -244,3 +340,5 @@ Invoke-RestMethod `
   -ContentType "application/json" `
   -Body '{"goal":"Prepare my Qwen Cloud hackathon submission pack.","executionMode":"qwen_tools","context":{"completedTools":[]}}'
 ```
+
+The route should return a selected tool call only after Qwen responds. The route does not execute that tool; ForgePilot execution still happens through the runtime.
