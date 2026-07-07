@@ -6,7 +6,9 @@ export type RuntimeErrorCode =
   | "TOOL_EXECUTION_FAILED"
   | "QWEN_NOT_CONFIGURED"
   | "QWEN_PLANNER_FAILED"
-  | "QWEN_PLANNER_INVALID";
+  | "QWEN_PLANNER_INVALID"
+  | "QWEN_TOOL_CALL_FAILED"
+  | "QWEN_TOOL_CALL_INVALID";
 
 export class RuntimeError extends Error {
   code: RuntimeErrorCode;

@@ -1,6 +1,7 @@
 import { existsSync } from "node:fs";
 
 import { getQwenConfigStatus } from "@/lib/qwen/client";
+import { getOpenAICompatibleToolDefinitions } from "@/lib/qwen/tool-manifest";
 
 import { approveRunAction, createDemoAutopilotRun, executeAutopilotRun } from "./run-engine";
 import { getPlannerToolManifest, listToolDefinitions } from "./tool-registry";
@@ -39,6 +40,7 @@ export async function runRuntimeSmokeTest() {
   const qwenConfigSafeStatus = getQwenConfigStatus();
   const tools = listToolDefinitions();
   const toolManifest = getPlannerToolManifest();
+  const qwenToolManifest = getOpenAICompatibleToolDefinitions();
   const toolNames = new Set(tools.map((tool) => tool.name));
   const missingTools = expectedTools.filter((toolName) => !toolNames.has(toolName));
 
@@ -64,6 +66,7 @@ export async function runRuntimeSmokeTest() {
 
   const run = createDemoAutopilotRun({
     plannerMode: "local",
+    executionMode: "local",
   });
   const awaitingRun = await executeAutopilotRun(run.id);
   const approval = awaitingRun.approvalRequests.find(
@@ -106,8 +109,14 @@ export async function runRuntimeSmokeTest() {
     ok,
     checkedAt: new Date().toISOString(),
     qwenConfigSafeStatus,
+    qwenConfigured: qwenConfigSafeStatus.configured,
+    qwenPlannerAvailable: qwenConfigSafeStatus.configured,
+    qwenToolCallingAvailable:
+      qwenConfigSafeStatus.configured && qwenToolManifest.length === tools.length,
     plannerModesAvailable: ["local", "qwen", "auto"] as const,
+    executionModesAvailable: ["local", "qwen_plan", "qwen_tools", "auto"] as const,
     toolManifestCount: toolManifest.length,
+    qwenToolManifestCount: qwenToolManifest.length,
     demoRunHealth,
     approvalHealth: {
       status: completedRun.status,

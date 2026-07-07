@@ -49,3 +49,43 @@ Return this exact JSON shape:
   }
 }`;
 }
+
+export function buildQwenToolCallSystemPrompt() {
+  return `You are the ForgePilot tool selector for a local-first autopilot runtime.
+
+ForgePilot is not a chatbot. You do not execute tools, write files, call APIs, publish content, or claim that work is complete. You only select the next tool call through the tool-calling mechanism.
+
+Rules:
+- Select only tools from the provided tool list.
+- The ForgePilot app validates your tool call and executes it through the local typed tool registry.
+- Do not claim actions are complete until the app returns tool results.
+- Final artifact writing requires human approval before the artifact writer can run.
+- If unsure, select request_human_approval.
+- Return tool calls through the tool-calling mechanism, not prose.
+- Do not request, produce, or reveal chain-of-thought.`;
+}
+
+export function buildQwenToolCallUserPrompt({
+  goal,
+  completedTools,
+  requiredTools,
+  context,
+}: {
+  goal: string;
+  completedTools: string[];
+  requiredTools: string[];
+  context: Record<string, unknown>;
+}) {
+  return `Goal: ${goal}
+
+Required demo workflow tools:
+${requiredTools.map((toolName) => `- ${toolName}`).join("\n")}
+
+Completed tools:
+${completedTools.length > 0 ? completedTools.map((toolName) => `- ${toolName}`).join("\n") : "- none"}
+
+Runtime context summary:
+${JSON.stringify(context, null, 2)}
+
+Select exactly one next tool call. Prefer the next missing required workflow tool.`;
+}
