@@ -2,6 +2,9 @@
 
 Use this checklist before sharing ForgePilot publicly or submitting the Devpost entry.
 
+Deployment URL: `TBD_AFTER_DEPLOYMENT`  
+GitHub repo: `https://github.com/Jeevang1-epic/forgepilot-autopilot-runtime`
+
 ## Local Setup
 
 ```bash
@@ -32,6 +35,14 @@ Optional but recommended for public webhook deployments:
 FORGEPILOT_WEBHOOK_SECRET=
 ```
 
+Optional public app URL placeholder:
+
+```text
+NEXT_PUBLIC_APP_URL=
+```
+
+The app does not require `NEXT_PUBLIC_APP_URL` to run.
+
 Do not commit `.env.local` or real secrets.
 
 ## Vercel Deployment Steps
@@ -42,7 +53,8 @@ Do not commit `.env.local` or real secrets.
 4. Add Qwen environment variables only if credentialed Qwen testing is ready.
 5. Add `FORGEPILOT_WEBHOOK_SECRET` before exposing webhook tests publicly.
 6. Deploy.
-7. Smoke test the routes listed below on the deployment URL.
+7. Replace `TBD_AFTER_DEPLOYMENT` in submission materials only after a real deployment exists.
+8. Smoke test the routes listed below on the deployment URL.
 
 ## Qwen Environment Setup
 
@@ -71,6 +83,8 @@ Do not commit `.env.local` or real secrets.
 - `/api/qwen/health`
 - `/api/runs/health`
 - `/api/webhooks/forgepilot`
+
+Detailed deployed checks live in `docs/deployed-smoke-test.md`.
 
 ## Expected Behavior Without Qwen Env
 
