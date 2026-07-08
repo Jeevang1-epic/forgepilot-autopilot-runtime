@@ -2,13 +2,26 @@
 
 Target length: 2:45 to 3:00.
 
-## 0:00 - 0:15 - Open Command Center
+Use either:
 
-Click path: open `/`.
+- Deployed URL: `TBD_AFTER_DEPLOYMENT`
+- Local URL: `http://localhost:3000`
+
+## 0:00 - 0:15 - Open Deployed URL Or Localhost
+
+Click path: open `TBD_AFTER_DEPLOYMENT` or `http://localhost:3000`.
 
 Narration:
 
-> This is ForgePilot, Jeevan Autopilot Runtime. It is a local-first Qwen-powered autopilot runtime for solo builders. It is not a chatbot and not just a dashboard. The goal is to turn one messy command into a real workflow with proof.
+> This is ForgePilot, Jeevan Autopilot Runtime. It is a local-first Qwen-powered autopilot runtime for solo builders. It turns one command or webhook trigger into a validated workflow with human approval, artifacts, and proof.
+
+## 0:15 - 0:30 - Show Command Center
+
+Click path: stay on `/`.
+
+Narration:
+
+> This is the Command Center. The command is the trigger surface, but the product is not a chat thread. ForgePilot creates a typed automation run.
 
 Show:
 
@@ -17,40 +30,25 @@ Show:
 - Trigger selector.
 - Runtime stats.
 
-## 0:15 - 0:35 - Explain One Command
-
-Click path: keep the example command visible.
-
-Narration:
-
-> The command here is "Prepare my Qwen Cloud hackathon submission pack." ForgePilot treats this as a runtime trigger. The output is not a message thread. The output is a run with tool calls, an approval gate, artifacts, and a Flight Recorder timeline.
-
-## 0:35 - 0:45 - Select Auto Modes
+## 0:30 - 0:45 - Start Auto Run
 
 Click path:
 
-1. Select `Auto` planner.
-2. Select `Auto` execution.
+1. Keep planner mode on `Auto`.
+2. Keep execution mode on `Auto`.
+3. Click `Start Autopilot Run`.
 
 Narration:
 
-> Auto mode uses Qwen when Qwen environment variables are configured. Without credentials, it records a safe local fallback so the demo remains reproducible without fake keys.
+> Auto mode uses Qwen when env vars are configured. Without credentials, ForgePilot records a safe local fallback so the demo remains reproducible without fake keys.
 
-## 0:45 - 0:55 - Start Autopilot Run
+## 0:45 - 1:10 - Show Runtime Brain
 
-Click path: click `Start Autopilot Run`.
-
-Narration:
-
-> Now ForgePilot creates the run and starts the local execution loop.
-
-## 0:55 - 1:20 - Show Runtime Brain
-
-Click path: on `/run/demo`, scroll to Runtime Brain if needed.
+Click path: on `/run/demo`, show Runtime Brain.
 
 Narration:
 
-> The Runtime Brain shows what was requested and what was actually used. Qwen can plan or select tools when configured, but ForgePilot owns validation and execution. Every selected tool must pass the local typed registry.
+> Runtime Brain shows what was requested and what was actually used. Qwen can plan or select tools, but ForgePilot validates and executes through the local typed registry.
 
 Show:
 
@@ -60,67 +58,72 @@ Show:
 - Tool manifest count.
 - Fallback warning if Qwen env vars are missing.
 
-## 1:20 - 1:40 - Show Flight Recorder Tool Cards
+## 1:10 - 1:35 - Show Flight Recorder
 
-Click path: scroll to `Tool calls and outputs`.
+Click path: scroll to the Execution Timeline and Tool calls.
 
 Narration:
 
-> These are real runtime records. Each card shows the tool name, input summary, output summary, risk level, status, who selected it, and that ForgePilot executed it locally.
+> The Flight Recorder keeps proof of the run: timeline steps, tool names, risk levels, inputs, outputs, and execution owner.
 
 Show:
 
-- Project scan.
-- Submission checklist.
-- Devpost draft.
-- Demo script.
-- Architecture summary.
+- Timeline.
+- Tool-call cards.
+- Approval requested status.
 
-## 1:40 - 1:55 - Show Artifacts Absent Before Approval
+## 1:35 - 1:50 - Show No Artifacts Before Approval
 
-Click path: look at the Artifact Pack panel while the run is `awaiting_approval`.
+Click path: inspect Artifact Pack while the run is `awaiting_approval`.
 
 Narration:
 
-> Notice that final artifacts are absent before approval. The runtime intentionally blocks `write_markdown_file` until the human checkpoint is approved.
+> Final artifacts are absent before approval. The runtime blocks final artifact writing until the human checkpoint is approved.
 
-## 1:55 - 2:10 - Approve Checkpoint
+## 1:50 - 2:05 - Approve
 
 Click path: click `Approve Final Artifact Pack`.
 
 Narration:
 
-> This is the human-in-the-loop safety boundary. The operator decides whether the runtime can finalize the artifact pack.
+> This approval is the safety boundary. The operator decides whether ForgePilot can finalize the artifact pack.
 
-## 2:10 - 2:25 - Show Artifacts Appear
+## 2:05 - 2:20 - Show Artifacts And Run Report
 
-Click path: inspect Artifact Pack and Run Report.
+Click path: inspect Artifact Pack and `View Run Report`.
 
 Narration:
 
-> After approval, the artifact pack appears: submission pack, demo script, LinkedIn draft, architecture summary, and run report JSON. The final proof is inspectable artifacts plus the Flight Recorder timeline.
+> After approval, artifacts appear: submission pack, demo script, LinkedIn draft, architecture summary, and run report JSON.
 
-## 2:25 - 2:40 - Open Trigger Lab
+## 2:20 - 2:35 - Open Trigger Lab
+
+Click path: open `/triggers`.
+
+Narration:
+
+> ForgePilot can also start from a webhook trigger. Trigger Lab shows the exact payload an n8n or external caller could send.
+
+## 2:35 - 2:45 - Send Test Webhook
 
 Click path:
 
-1. Open `/triggers`.
-2. Click `Send Test Webhook`.
-3. Open the returned Flight Recorder link.
+1. Click `Send Test Webhook`.
+2. Open the returned Flight Recorder link.
 
 Narration:
 
-> ForgePilot can also start from a webhook trigger. The Trigger Lab sends the same validated JSON an n8n or external trigger could send. The webhook creates a run, but it does not bypass local validation or approval.
+> The webhook creates a run and pauses at approval. It does not bypass validation, local execution, or the approval gate.
 
-## 2:40 - 2:55 - Open Proof Pack
+## 2:45 - 2:55 - Open Proof Pack
 
 Click path: open `/proof`.
 
 Narration:
 
-> The Proof Pack summarizes what is implemented and what is planned next. It shows Qwen integration proof, tool-calling safety, webhook proof, approval proof, artifact proof, API endpoints, and the Devpost checklist.
+> The Proof Pack shows what is implemented now, what is planned next, the safety model, Qwen usage proof, webhook proof, and API checklist.
 
-## 2:55 - 3:00 - Close With Architecture
+## 2:55 - 3:00 - End On Architecture Page
 
 Click path: open `/architecture`.
 
