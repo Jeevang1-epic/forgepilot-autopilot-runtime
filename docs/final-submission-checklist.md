@@ -23,9 +23,9 @@ Status markers:
 
 ## Demo And Deployment
 
-- Needs user action - Deploy publicly.
+- Done - Deploy publicly: `https://forgepilot-autopilot-runtime.vercel.app/`
 - Needs user action - Add deployment URL to Devpost.
-- Needs user action - Replace `TBD_AFTER_DEPLOYMENT` in submission notes after deployment exists.
+- Done - Replace deployment placeholder in repo docs.
 - Done - `/` loads the Command Center locally.
 - Done - `/run/demo` loads the Flight Recorder locally.
 - Done - `/triggers` loads Trigger Lab locally.
@@ -57,7 +57,7 @@ Status markers:
 - Needs user action - Submit.
 - Done - Architecture page is ready.
 - Done - Proof Pack route is ready.
-- Needs user action - Add deployment URL.
+- Needs user action - Add deployment URL to Devpost.
 - Done - GitHub URL is ready.
 
 ## Quality Gates

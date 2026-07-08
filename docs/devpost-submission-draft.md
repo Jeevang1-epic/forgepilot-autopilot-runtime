@@ -59,7 +59,7 @@ That boundary makes the system easier to explain, safer to demo, and closer to a
 
 ## What's Next
 
-- Deploy publicly and add the deployment URL to Devpost.
+- Add the live deployment URL to Devpost: https://forgepilot-autopilot-runtime.vercel.app/
 - Optionally verify real Qwen env vars with the final account.
 - Record and upload the under-3-minute demo video.
 - Add an optional live n8n workflow connected to the webhook route.

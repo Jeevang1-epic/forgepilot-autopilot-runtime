@@ -4,12 +4,12 @@ Target length: 2:45 to 3:00.
 
 Use either:
 
-- Deployed URL: `TBD_AFTER_DEPLOYMENT`
+- Deployed URL: `https://forgepilot-autopilot-runtime.vercel.app/`
 - Local URL: `http://localhost:3000`
 
 ## 0:00 - 0:15 - Open Deployed URL Or Localhost
 
-Click path: open `TBD_AFTER_DEPLOYMENT` or `http://localhost:3000`.
+Click path: open `https://forgepilot-autopilot-runtime.vercel.app/` or `http://localhost:3000`.
 
 Narration:
 

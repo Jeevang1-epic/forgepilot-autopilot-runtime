@@ -5,7 +5,7 @@ ForgePilot is a local-first Qwen-powered autopilot runtime for solo builders. It
 Status: foundation/demo MVP  
 Track: Qwen Cloud Global AI Hackathon, Track 4 - Autopilot Agent  
 License: MIT  
-Deployment URL: `TBD_AFTER_DEPLOYMENT`  
+Deployment URL: `https://forgepilot-autopilot-runtime.vercel.app/`  
 GitHub repo: `https://github.com/Jeevang1-epic/forgepilot-autopilot-runtime`  
 One-line pitch: One builder command becomes a real workflow with approval, artifacts, and proof.
 
@@ -52,8 +52,8 @@ Open `http://localhost:3000`.
 
 ## Submission Status
 
-- Done: runtime foundation, Qwen adapters, webhook route, approval gate, Proof Pack, docs, MIT license.
-- Needs user action: deploy publicly, add deployment URL to Devpost, record/upload demo video, paste Devpost copy, submit.
+- Done: runtime foundation, Qwen adapters, webhook route, approval gate, Proof Pack, docs, MIT license, public deployment.
+- Needs user action: add deployment URL to Devpost, record/upload demo video, paste Devpost copy, submit.
 - Optional: run credentialed Qwen env verification and connect a live n8n workflow.
 
 ## Core Runtime Flow
@@ -186,7 +186,7 @@ Recommended standard deployment path:
 3. Use `npm run build`.
 4. Add Qwen env vars only when ready for credentialed Qwen testing.
 5. Add `FORGEPILOT_WEBHOOK_SECRET` before publicly exposing webhook tests.
-6. Optionally set `NEXT_PUBLIC_APP_URL=TBD_AFTER_DEPLOYMENT` after the real URL exists.
+6. Optionally set `NEXT_PUBLIC_APP_URL=https://forgepilot-autopilot-runtime.vercel.app/`.
 7. Smoke test `/`, `/run/demo`, `/triggers`, `/proof`, `/architecture`, `/api/qwen/health`, and `/api/runs/health`.
 
 See:

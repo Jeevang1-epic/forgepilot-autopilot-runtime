@@ -1,9 +1,9 @@
 # Deployed Smoke Test
 
-Deployment URL: `TBD_AFTER_DEPLOYMENT`  
+Deployment URL: `https://forgepilot-autopilot-runtime.vercel.app/`  
 GitHub repo: `https://github.com/Jeevang1-epic/forgepilot-autopilot-runtime`
 
-Run this checklist after deploying ForgePilot to Vercel or another Next.js-compatible host. Replace `TBD_AFTER_DEPLOYMENT` with the real deployment URL only after deployment exists.
+Run this checklist after deploying ForgePilot to Vercel or another Next.js-compatible host.
 
 ## Pages
 
@@ -43,7 +43,7 @@ Expected:
 Set the deployment URL:
 
 ```powershell
-$baseUrl = "TBD_AFTER_DEPLOYMENT"
+$baseUrl = "https://forgepilot-autopilot-runtime.vercel.app"
 ```
 
 Health checks:
@@ -117,14 +117,14 @@ Invoke-RestMethod `
 Health checks:
 
 ```bash
-curl TBD_AFTER_DEPLOYMENT/api/qwen/health
-curl TBD_AFTER_DEPLOYMENT/api/runs/health
+curl https://forgepilot-autopilot-runtime.vercel.app/api/qwen/health
+curl https://forgepilot-autopilot-runtime.vercel.app/api/runs/health
 ```
 
 Demo run:
 
 ```bash
-curl -X POST TBD_AFTER_DEPLOYMENT/api/runs/demo \
+curl -X POST https://forgepilot-autopilot-runtime.vercel.app/api/runs/demo \
   -H "Content-Type: application/json" \
   -d "{\"plannerMode\":\"auto\",\"executionMode\":\"auto\"}"
 ```
@@ -132,7 +132,7 @@ curl -X POST TBD_AFTER_DEPLOYMENT/api/runs/demo \
 Valid webhook:
 
 ```bash
-curl -X POST TBD_AFTER_DEPLOYMENT/api/webhooks/forgepilot \
+curl -X POST https://forgepilot-autopilot-runtime.vercel.app/api/webhooks/forgepilot \
   -H "Content-Type: application/json" \
   -d "{\"goal\":\"Prepare my Qwen Cloud hackathon submission pack.\",\"source\":\"manual_test\",\"plannerMode\":\"auto\",\"executionMode\":\"auto\",\"metadata\":{\"triggerName\":\"Deployed Smoke Test\",\"requestId\":\"deploy-smoke-001\",\"notes\":\"Post-deployment webhook verification.\"}}"
 ```
@@ -140,7 +140,7 @@ curl -X POST TBD_AFTER_DEPLOYMENT/api/webhooks/forgepilot \
 Invalid webhook:
 
 ```bash
-curl -i -X POST TBD_AFTER_DEPLOYMENT/api/webhooks/forgepilot \
+curl -i -X POST https://forgepilot-autopilot-runtime.vercel.app/api/webhooks/forgepilot \
   -H "Content-Type: application/json" \
   -d "{}"
 ```

@@ -2,7 +2,7 @@
 
 Use this checklist before sharing ForgePilot publicly or submitting the Devpost entry.
 
-Deployment URL: `TBD_AFTER_DEPLOYMENT`  
+Deployment URL: `https://forgepilot-autopilot-runtime.vercel.app/`  
 GitHub repo: `https://github.com/Jeevang1-epic/forgepilot-autopilot-runtime`
 
 ## Local Setup
@@ -53,7 +53,7 @@ Do not commit `.env.local` or real secrets.
 4. Add Qwen environment variables only if credentialed Qwen testing is ready.
 5. Add `FORGEPILOT_WEBHOOK_SECRET` before exposing webhook tests publicly.
 6. Deploy.
-7. Replace `TBD_AFTER_DEPLOYMENT` in submission materials only after a real deployment exists.
+7. Confirm the deployment URL is recorded in submission materials.
 8. Smoke test the routes listed below on the deployment URL.
 
 ## Qwen Environment Setup
