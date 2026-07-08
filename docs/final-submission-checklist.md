@@ -1,16 +1,20 @@
 # Final Submission Checklist
 
-Use this list before clicking submit on Devpost.
+Status markers:
+
+- Done: completed in the repo.
+- Needs user action: must be completed outside this repo before Devpost.
+- Optional: useful but not required for the current foundation/demo submission.
 
 ## Repository
 
-- Public GitHub repo is available.
-- `LICENSE` is visible at the repo root.
-- README is complete and accurate.
-- No real secrets are committed.
-- `.env.local` is not committed.
-- `.env.example` contains placeholders only.
-- Forbidden marker files are absent:
+- Done - Public GitHub repo: `https://github.com/Jeevang1-epic/forgepilot-autopilot-runtime`
+- Done - MIT `LICENSE` visible at repo root.
+- Done - README is submission-ready and accurate.
+- Done - `.env.example` contains placeholders only.
+- Done - `.env.local` is not tracked.
+- Done - No real secrets are committed.
+- Done - Forbidden marker files are absent:
   - `CLAUDE.md`
   - `AGENTS.md`
   - `.cursor/rules`
@@ -19,39 +23,45 @@ Use this list before clicking submit on Devpost.
 
 ## Demo And Deployment
 
-- Deployment URL is live.
-- `/` loads the Command Center.
-- `/run/demo` loads the Flight Recorder.
-- `/triggers` loads Trigger Lab.
-- `/proof` loads Submission Proof Pack.
-- `/architecture` loads architecture proof.
-- `GET /api/qwen/health` returns normalized JSON.
-- `GET /api/runs/health` returns normalized JSON.
-- `POST /api/webhooks/forgepilot` accepts a valid sample payload.
-- Invalid webhook payload returns `400`.
-- Wrong webhook secret returns `401` when a secret is configured.
+- Needs user action - Deploy publicly.
+- Needs user action - Add deployment URL to Devpost.
+- Needs user action - Replace `TBD_AFTER_DEPLOYMENT` in submission notes after deployment exists.
+- Done - `/` loads the Command Center locally.
+- Done - `/run/demo` loads the Flight Recorder locally.
+- Done - `/triggers` loads Trigger Lab locally.
+- Done - `/proof` loads Submission Proof Pack locally.
+- Done - `/architecture` loads architecture proof locally.
+- Done - `GET /api/qwen/health` returns normalized JSON.
+- Done - `GET /api/runs/health` returns normalized JSON.
+- Done - `POST /api/webhooks/forgepilot` accepts a valid sample payload.
+- Done - Invalid webhook payload returns `400`.
+- Optional - Wrong webhook secret returns `401` when a secret is configured.
 
 ## Qwen And Runtime Proof
 
-- Qwen env tested if credentials are available, or fallback behavior is explained.
-- Qwen never executes tools directly.
-- Local registry validation is shown.
-- Approval gate is shown before artifact generation.
-- Artifacts appear after approval.
-- Flight Recorder run report is visible.
+- Optional - Real Qwen env test with `QWEN_API_KEY`, `QWEN_BASE_URL`, and `QWEN_MODEL`.
+- Done - Fallback behavior is documented and tested when Qwen env vars are missing.
+- Done - Qwen never executes tools directly.
+- Done - Local registry validation is shown.
+- Done - Approval gate is shown before artifact generation.
+- Done - Artifacts appear after approval.
+- Done - Flight Recorder run report is visible.
 
 ## Devpost Materials
 
-- Track 4: Autopilot Agent is selected.
-- Devpost text is ready.
-- Demo video is under 3 minutes.
-- Architecture page or diagram is included.
-- Proof Pack route is included.
-- Deployment URL is included.
-- GitHub URL is included.
+- Done - Track 4: Autopilot Agent is named.
+- Done - Devpost copy is paste-ready in `docs/devpost-submission-draft.md`.
+- Needs user action - Record demo video.
+- Needs user action - Upload demo video.
+- Needs user action - Paste Devpost copy.
+- Needs user action - Submit.
+- Done - Architecture page is ready.
+- Done - Proof Pack route is ready.
+- Needs user action - Add deployment URL.
+- Done - GitHub URL is ready.
 
 ## Quality Gates
 
-- `npm run lint` passes.
-- `npm run build` passes.
-- `npm audit --audit-level=moderate` passes.
+- Done - `npm run lint` passes.
+- Done - `npm run build` passes.
+- Done - `npm audit --audit-level=moderate` passes.

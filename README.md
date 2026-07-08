@@ -5,9 +5,39 @@ ForgePilot is a local-first Qwen-powered autopilot runtime for solo builders. It
 Status: foundation/demo MVP  
 Track: Qwen Cloud Global AI Hackathon, Track 4 - Autopilot Agent  
 License: MIT  
+Deployment URL: `TBD_AFTER_DEPLOYMENT`  
+GitHub repo: `https://github.com/Jeevang1-epic/forgepilot-autopilot-runtime`  
 One-line pitch: One builder command becomes a real workflow with approval, artifacts, and proof.
 
 ForgePilot is not a generic chatbot. It is not only a dashboard. The command input is the trigger surface; the core product is a typed automation run with tool calls, approvals, artifacts, and inspectable runtime evidence.
+
+## 30-Second Judge View
+
+- Start at `/` and launch one auto-mode run.
+- Inspect Runtime Brain on `/run/demo`.
+- Show tool-call cards and proof timeline.
+- Show artifacts absent before approval.
+- Approve the checkpoint and show artifacts plus run report.
+- Open `/triggers`, send a test webhook, and open the returned run URL.
+- Open `/proof` and `/architecture` to explain the runtime boundary.
+
+## What It Proves
+
+- Qwen can plan or select tools when configured.
+- ForgePilot validates Qwen output and executes tools locally.
+- Missing Qwen env vars do not break the demo.
+- Webhook triggers can start runs without bypassing approval.
+- The approval gate blocks final artifacts until a human approves.
+- The Flight Recorder preserves timeline, tools, approvals, artifacts, and fallback proof.
+
+## Quick Local Setup
+
+```bash
+npm install
+npm run dev
+```
+
+Open `http://localhost:3000`.
 
 ## Demo Routes
 
@@ -19,6 +49,12 @@ ForgePilot is not a generic chatbot. It is not only a dashboard. The command inp
 - `/api/qwen/health` - safe Qwen config health
 - `/api/runs/health` - runtime health and safety checks
 - `/api/webhooks/forgepilot` - validated inbound webhook trigger
+
+## Submission Status
+
+- Done: runtime foundation, Qwen adapters, webhook route, approval gate, Proof Pack, docs, MIT license.
+- Needs user action: deploy publicly, add deployment URL to Devpost, record/upload demo video, paste Devpost copy, submit.
+- Optional: run credentialed Qwen env verification and connect a live n8n workflow.
 
 ## Core Runtime Flow
 
@@ -150,11 +186,14 @@ Recommended standard deployment path:
 3. Use `npm run build`.
 4. Add Qwen env vars only when ready for credentialed Qwen testing.
 5. Add `FORGEPILOT_WEBHOOK_SECRET` before publicly exposing webhook tests.
-6. Smoke test `/`, `/run/demo`, `/triggers`, `/proof`, `/architecture`, `/api/qwen/health`, and `/api/runs/health`.
+6. Optionally set `NEXT_PUBLIC_APP_URL=TBD_AFTER_DEPLOYMENT` after the real URL exists.
+7. Smoke test `/`, `/run/demo`, `/triggers`, `/proof`, `/architecture`, `/api/qwen/health`, and `/api/runs/health`.
 
 See:
 
 - `docs/deployment-checklist.md`
+- `docs/deployed-smoke-test.md`
+- `docs/qwen-real-env-test.md`
 - `docs/alibaba-cloud-proof-path.md`
 
 The repo does not claim Alibaba Cloud deployment is complete. The Alibaba proof path is documented as a next deployment step.
@@ -221,6 +260,8 @@ Invoke-RestMethod `
 - `docs/devpost-submission-draft.md`
 - `docs/demo-script.md`
 - `docs/deployment-checklist.md`
+- `docs/deployed-smoke-test.md`
+- `docs/qwen-real-env-test.md`
 - `docs/screenshot-checklist.md`
 - `docs/final-submission-checklist.md`
 - `docs/alibaba-cloud-proof-path.md`
