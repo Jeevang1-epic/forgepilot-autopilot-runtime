@@ -86,6 +86,14 @@ const apiEndpoints = [
   "GET /api/runs/[id]",
 ];
 
+const demoRoutes = [
+  "/",
+  "/run/demo",
+  "/triggers",
+  "/proof",
+  "/architecture",
+];
+
 const devpostChecklist = [
   "Track 4: Autopilot Agent is clearly named",
   "One-line pitch explains runtime automation",
@@ -142,6 +150,14 @@ export default function ProofPage() {
               artifact generation, and Flight Recorder proof. This page separates
               what is implemented today from what remains planned.
             </p>
+            <div className="mt-5 flex flex-wrap gap-2">
+              <span className="rounded-full border border-white/10 bg-white/[0.045] px-3 py-1.5 text-xs text-white/66">
+                Deployment URL: TBD_AFTER_DEPLOYMENT
+              </span>
+              <span className="rounded-full border border-white/10 bg-white/[0.045] px-3 py-1.5 text-xs text-white/66">
+                GitHub: Jeevang1-epic/forgepilot-autopilot-runtime
+              </span>
+            </div>
           </div>
           <div className="grid gap-3 sm:grid-cols-2 xl:min-w-[24rem]">
             <Link
@@ -237,6 +253,22 @@ export default function ProofPage() {
       <section className="grid gap-4 xl:grid-cols-3">
         <article className="rounded-lg border border-white/10 bg-black/25 p-5">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-teal-200/70">
+            Demo Routes
+          </p>
+          <div className="mt-4 space-y-2">
+            {demoRoutes.map((route) => (
+              <p
+                key={route}
+                className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 font-mono text-xs text-white/72"
+              >
+                {route}
+              </p>
+            ))}
+          </div>
+        </article>
+
+        <article className="rounded-lg border border-white/10 bg-black/25 p-5">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-teal-200/70">
             API Endpoint Checklist
           </p>
           <div className="mt-4 space-y-2">
@@ -251,7 +283,7 @@ export default function ProofPage() {
           </div>
         </article>
 
-        <article className="rounded-lg border border-white/10 bg-black/25 p-5">
+        <article className="rounded-lg border border-white/10 bg-black/25 p-5 xl:col-span-1">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-teal-200/70">
             Devpost Submission Checklist
           </p>
